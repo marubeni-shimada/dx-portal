@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>接待交際費 相手先 振り分けツール</title>
+<style>
+  :root{--bg:#f5f6f8;--panel:#ffffff;--panel2:#f2f4f7;--line:#e7eaef;--line2:#eef0f4;--txt:#111826;--mut:#64707f;--mut2:#95a0af;
+    --accent:#4f46e5;--accent2:#4338ca;--accentSoft:#eef1fe;--warn:#b45309;--warnSoft:#fdf3e7;
+    --none:#b45309;--bucket:#64707f;--co:#4f46e5;--ok:#4f46e5;--done:#0f9d6b;--learn:#64707f;--radius:10px;--radius-sm:8px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:13px;-webkit-font-smoothing:antialiased}
+  header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);padding:12px 18px}
+  h1{margin:0 0 3px;font-size:16px;font-weight:650;letter-spacing:-.01em;color:var(--txt)}
+  .demopill{display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:20px;padding:2px 10px;margin-left:6px;vertical-align:middle}
+  .sub{color:var(--mut);font-size:11px;font-weight:400}
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 470px;height:calc(100vh - 100px)}
+  @media(max-width:1050px){.wrap{grid-template-columns:1fr;height:auto}.side{border-left:none!important;border-top:1px solid var(--line)}}
+  .main{overflow:auto;padding:16px 18px;background:var(--bg)}
+  .side{border-left:1px solid var(--line);overflow:auto;padding:16px 18px;background:var(--panel)}
+  .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:14px}
+  .tab{background:transparent;border:1px solid transparent;color:var(--mut);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:.12s}
+  .tab:hover{background:var(--panel2);color:var(--txt)}
+  .tab.on{background:var(--txt);border-color:var(--txt);color:#fff;font-weight:600}
+  input.search{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:var(--radius-sm);padding:7px 11px;font-size:12px;outline:none;flex:1;min-width:160px;transition:.12s}
+  input.search::placeholder{color:var(--mut2)}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+  table{border-collapse:collapse;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  th,td{border-bottom:1px solid var(--line2);padding:9px 11px;text-align:left;vertical-align:top}
+  th{position:sticky;top:0;background:var(--panel);font-size:10.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--mut2);z-index:5;border-bottom:1px solid var(--line)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#fafbfc}
+  tr.need td{background:transparent;box-shadow:inset 3px 0 0 var(--warn)}
+  tr.done td{background:transparent}tr.done .tek{color:var(--mut2);text-decoration:line-through}
+  tr.mhdr td{background:var(--panel2)!important;cursor:pointer;font-weight:700;color:var(--txt);border-bottom:1px solid var(--line);border-top:1px solid var(--line);padding:8px 11px;user-select:none}
+  tr.mhdr:hover td{background:#e9edf3!important}
+  tr.mhdr .caret{display:inline-block;width:12px;color:var(--mut);font-size:10px;margin-right:4px}
+  tr.mhdr .mcnt{color:var(--mut);font-weight:500;font-size:11px;margin-left:8px}
+  tr.mhdr .msub{float:right;font-variant-numeric:tabular-nums;color:var(--accent2);font-weight:700}
+  tr.mhdr .mdone{float:right;font-weight:500;font-size:11px;color:var(--done);margin-left:12px}
+  .tek{font-size:12.5px;line-height:1.45;max-width:330px}.ven{color:var(--mut2);font-size:11px;margin-top:1px}
+  .ck{width:18px;height:18px;cursor:pointer;accent-color:var(--done)}
+  .chip{display:inline-flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:2px 5px 2px 9px;margin:2px 3px 2px 0;font-size:11px;font-weight:500;color:var(--txt)}
+  .chip .x{cursor:pointer;color:var(--mut2);border-radius:5px;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center}
+  .chip .x:hover{background:#f4e3e0;color:#c0392b}
+  .chip.co{background:var(--accentSoft);border-color:#dcdff9;color:var(--accent2)}
+  .chip.bucket{background:var(--panel2);border-color:var(--line);color:var(--mut)}
+  .chip.none{background:var(--warnSoft);border-color:#f2ddc0;color:var(--warn)}
+  .addc{border:1px dashed #cfd5df;border-radius:7px;padding:3px 8px;font-size:11px;width:130px;background:transparent;color:var(--txt)}
+  .addc:focus{border-style:solid}
+  .split{color:var(--mut2);font-size:10px;margin-left:2px}
+  .kind{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;white-space:nowrap;letter-spacing:.01em}
+  .k-company{color:var(--mut);background:var(--panel2)}
+  .k-bucket{color:var(--mut);background:var(--panel2)}
+  .k-none{color:var(--warn);background:var(--warnSoft)}
+  .k-edited{color:var(--accent2);background:var(--accentSoft)}
+  .k-learned{color:var(--mut);background:var(--panel2)}
+  .side h2{font-size:13px;font-weight:650;margin:2px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--txt)}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:600;transition:.12s}
+  .btn.sec{background:var(--panel);border:1px solid var(--line);color:var(--txt)}
+  .btn.mini{padding:5px 10px;font-size:11px}
+  .btn.imp{background:var(--txt);border-color:var(--txt)}
+  .btn:hover{background:var(--accent2);border-color:var(--accent2)}
+  .btn.sec:hover{background:var(--panel2)}
+  .btn.imp:hover{background:#000;border-color:#000}
+  .stat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .stat div{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 13px;display:flex;align-items:baseline;gap:5px;white-space:nowrap;color:var(--mut);font-size:11px}
+  .stat b{font-size:17px;font-weight:650;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .mono{font-variant-numeric:tabular-nums}.miss{color:var(--warn)!important}
+  .prog{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:2px 0 6px}
+  .prog>div{height:100%;background:var(--done);width:0;transition:width .3s ease}
+  .pv{width:100%;border-collapse:separate;border-spacing:0}.pv td{padding:0;border:none}
+  .prow td{padding:8px 8px;border-bottom:1px solid var(--line2)}
+  .prow .cname{font-size:12.5px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow .pcnt{color:var(--mut2);font-size:11px;text-align:right;width:44px;font-variant-numeric:tabular-nums}
+  .prow .pamt{text-align:right;font-variant-numeric:tabular-nums;font-weight:650;font-size:13px;width:96px}
+  .barcell{height:5px;padding:0!important}.barfill{margin-left:8px;height:4px;border-radius:3px;background:var(--accent);opacity:.85}
+  .tag{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  .t-co{background:var(--accent)}.t-bucket{background:var(--mut2)}.t-none{background:var(--warn)}
+  .grandbox{display:flex;justify-content:space-between;align-items:center;background:var(--txt);border:1px solid var(--txt);border-radius:var(--radius);padding:11px 15px;margin:4px 0 12px;font-size:13px;color:#c7ccd6}
+  .grandbox b{font-size:19px;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .mtx-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);max-height:58vh}
+  table.mtx{border-collapse:separate;border-spacing:0;font-size:12px;min-width:640px;border:none;border-radius:0}
+  table.mtx th,table.mtx td{padding:7px 10px;white-space:nowrap;border-bottom:1px solid var(--line2)}
+  table.mtx thead th{position:sticky;top:0;background:var(--panel2);z-index:3;text-align:right;color:var(--mut);font-weight:600;text-transform:none;letter-spacing:0}
+  table.mtx thead th:first-child{left:0;z-index:4;text-align:left}
+  table.mtx td:first-child,table.mtx th:first-child{position:sticky;left:0;background:var(--panel);text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+  table.mtx tbody tr:nth-child(even) td{background:#fafbfc}table.mtx tbody tr:nth-child(even) td:first-child{background:#f6f7f9}
+  table.mtx td.num{text-align:right;font-variant-numeric:tabular-nums}table.mtx tr:hover td{background:var(--accentSoft)!important}
+  table.mtx .grand td{background:var(--panel2)!important;font-weight:700;position:sticky;bottom:0;color:var(--txt)}.dot{color:var(--mut2)}
+  .overlay{position:fixed;inset:0;background:rgba(17,24,38,.5);z-index:50;display:none;padding:26px}.overlay.on{display:block}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;height:100%;display:flex;flex-direction:column;padding:18px;box-shadow:0 24px 64px rgba(17,24,38,.22)}
+  .mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .closex{cursor:pointer;font-size:18px;color:var(--mut);padding:3px 11px;border:1px solid var(--line);border-radius:var(--radius-sm)}
+  .closex:hover{background:var(--panel2)}
+  .impbox{background:var(--panel2);border:1px dashed #cfd5df;border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;transition:.12s}
+  .impbox.drag{border-color:var(--accent);border-style:solid;background:var(--accentSoft);box-shadow:0 0 0 3px rgba(79,70,229,.15) inset}
+  .impbox p{margin:4px 0;font-size:11px;color:var(--mut)}
+  .impbox .dzhint b{color:var(--txt)}
+  .acbox{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:0 12px 32px rgba(17,24,38,.16);max-height:260px;overflow:auto;display:none;min-width:180px}
+  .acitem{padding:7px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--line2);color:var(--txt)}
+  .acitem:last-child{border-bottom:none}
+  .acitem.on,.acitem:hover{background:var(--accentSoft);color:var(--accent2)}
+  .acitem b{color:var(--accent)}.acitem.on b,.acitem:hover b{color:var(--accent2)}
+  .acitem .mk{font-size:10px;color:var(--mut2);margin-left:6px}.acitem.on .mk{color:var(--accent)}
+  .acnew{color:var(--accent)}
+  .loadwrap{position:fixed;inset:0;background:rgba(245,246,248,.62);backdrop-filter:blur(1px);z-index:80;display:none;align-items:center;justify-content:center}
+  .loadwrap.on{display:flex}
+  .loadbox{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 22px;box-shadow:0 12px 40px rgba(17,24,38,.18);font-size:13px;font-weight:600;color:var(--txt)}
+  .spinner{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>接待交際費 相手先 振り分けツール <span class="sub">摘要から相手先を自動判定 → 修正・チェック / データ取込で毎期運用</span><span class="demopill">🎪 どぼフェス体験版</span></h1>
+  <div class="stat" id="stat"></div>
+  <div class="prog"><div id="progbar"></div></div>
+</header>
+<div class="wrap">
+  <div class="main" id="mainpane">
+    <div class="bar">
+      <span class="tab on" data-f="all">全件</span>
+      <span class="tab" data-f="none">未分類</span>
+      <span class="tab" data-f="bucket">カテゴリ</span>
+      <span class="tab" data-f="multi">複数社(按分)</span>
+      <span class="tab" data-f="edited">編集済</span>
+      <span class="tab" data-f="unchecked">未チェック</span>
+      <span class="tab" data-f="checked">チェック済</span>
+      <input class="search" id="q" placeholder="摘要・支払先・相手先で検索…">
+    </div>
+    <table id="tbl">
+      <thead><tr><th>月</th><th class="num">金額</th><th>支払先 / 摘要</th><th title="確認済み">✓</th><th id="cliTh">相手先（クリックで編集・追加／複数社は均等按分）</th><th>区分</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="side">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+      <span class="sub" style="font-weight:600">対象期:</span>
+      <select id="periodSel" style="background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 8px;font-size:12px"></select>
+      <button class="btn sec mini" onclick="addPeriod()">＋新しい期</button>
+      <button class="btn sec mini" onclick="renamePeriod()">名称変更</button>
+      <button class="btn sec mini" onclick="delPeriod()">削除</button>
+    </div>
+    <div class="impbox" id="dropzone">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn imp mini" onclick="document.getElementById('impf').click()">⬆ データ取込（txt/CSV）</button>
+        <input type="file" id="impf" accept=".txt,.csv,.tsv" multiple style="display:none">
+        <button class="btn sec mini" onclick="clearAllTx()">この期を全消去</button>
+        <button class="btn sec mini" onclick="resetDemo()">🔄 デモをリセット</button>
+        <span class="sub" id="dsinfo"></span>
+      </div>
+      <p class="dzhint">📎 ここに <b>txt / CSV をドラッグ＆ドロップ</b>（複数ファイル可）、またはボタンから選択。会議費・交際費をまとめて投入できます。摘要から相手先を自動判定し、同一明細（R-No）は重複スキップ、手修正は学習辞書として次回も自動適用します。</p>
+    </div>
+    <details style="display:none">
+      <summary style="cursor:pointer;color:var(--mut);font-size:12px">☁ クラウド同期設定</summary>
+      <div style="padding:8px 2px;display:flex;flex-direction:column;gap:6px">
+        <input class="search" id="gasurl" placeholder="WebアプリのURL（…/exec）" value="" style="flex:none">
+        <input class="search" id="gastoken" placeholder="合言葉（任意・空欄で制限なし）" style="flex:none">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn mini" onclick="saveCloudCfg()">設定を保存</button>
+          <button class="btn sec mini" onclick="cloudSave()">今すぐ保存</button>
+          <button class="btn sec mini" onclick="cloudLoad(true)">クラウドから読込</button>
+        </div>
+      </div>
+    </details>
+    <div id="syncstat" class="sub" style="margin-bottom:10px"></div>
+    <div style="display:flex;gap:6px;align-items:center;margin:2px 0 8px">
+      <span class="sub" style="font-weight:600">集計軸:</span>
+      <button class="btn mini" id="axClient" onclick="switchAxis('client')">相手先別</button>
+      <button class="btn sec mini" id="axStaff" onclick="switchAxis('staff')">担当者別</button>
+      <span class="sub" id="axHint" style="margin-left:2px">摘要から取引先を判定</span>
+    </div>
+    <h2 id="pivH2">相手先別 集計
+      <span style="display:flex;gap:6px">
+        <button class="btn mini" id="vTotal" onclick="setView('total')">合計</button>
+        <button class="btn sec mini" id="vMonth" onclick="setView('month')">月別</button>
+        <button class="btn sec mini" onclick="openModal()">⤢ 拡大</button>
+      </span>
+    </h2>
+    <div class="grandbox"><span>総額</span><span><b id="gtot">0</b> 円</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+      <button class="btn mini" onclick="exportXlsx()">⬇ Excel出力（集計＋明細）</button>
+      <button class="btn sec mini" onclick="exportPivot()">集計CSV</button>
+      <button class="btn sec mini" onclick="exportDetail()">明細CSV</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+      <button class="btn sec mini" onclick="saveProg()">💾 ファイル保存</button>
+      <button class="btn sec mini" onclick="document.getElementById('loadf').click()">📂 ファイル読込</button>
+      <button class="btn sec mini" onclick="clearAuto()">保存消去</button>
+      <button class="btn sec mini" onclick="resetAll()">自動判定に戻す</button>
+      <input type="file" id="loadf" accept=".json" style="display:none">
+    </div>
+    <div id="autostat" class="sub" style="margin-bottom:10px"></div>
+    <div id="pivotArea"></div>
+  </div>
+</div>
+<div class="overlay" id="overlay"><div class="modal">
+  <div class="mhead"><h2 style="margin:0">相手先別 × 月別 集計 <span class="sub" id="mtot"></span></h2><span class="closex" onclick="closeModal()">×</span></div>
+  <div style="flex:1;overflow:auto" id="modalPivot"></div>
+</div></div>
+<datalist id="cands"></datalist>
+<div id="ac" class="acbox"></div>
+<div id="loading" class="loadwrap"><div class="loadbox"><div class="spinner"></div><span id="loadmsg">読み込み中…</span></div></div>
+<script>
+/* =========================================================
+   展示・体験用デモ版
+   - サーバー(GAS)接続なし。データはこのブラウザのlocalStorageのみ。
+   - 取引先名・社員名・明細はすべて架空のサンプル。
+   - 初回はサンプルを自動表示。「デモをリセット」でいつでも戻せる。
+   ========================================================= */
+
+// ---- 架空のサンプル明細（すべてダミー） ----
+const SAMPLE_TXS=[
+  {id:0, key:'S001', m:7,  d:5,  amt:15000, v:'割烹あおい',    t:'A建設 接待会食 山田太郎',         c:['A建設'],                    k:'company'},
+  {id:1, key:'S002', m:7,  d:18, amt:8000,  v:'喫茶ルーム',    t:'B工業 打合せ 茶菓 佐藤次郎',       c:['B工業'],                    k:'company'},
+  {id:2, key:'S003', m:8,  d:9,  amt:42000, v:'グリーンヒルGC',t:'C組 D道路 ゴルフ接待 高橋四郎',   c:['C組','D道路'],              k:'company'},
+  {id:3, key:'S004', m:8,  d:20, amt:5000,  v:'花の花園',      t:'香典 取引先',                     c:['慶弔・見舞'],              k:'bucket'},
+  {id:4, key:'S005', m:9,  d:3,  amt:12000, v:'居酒屋とら',    t:'E建材 会食 鈴木三郎',             c:['E建材'],                    k:'company'},
+  {id:5, key:'S006', m:9,  d:15, amt:30000, v:'まるび百貨店',  t:'中元 取引先各位 田中五郎',         c:['中元・歳暮(相手先不明)'],  k:'bucket'},
+  {id:6, key:'S007', m:10, d:2,  amt:9000,  v:'鮨源',          t:'新規取引先 会食',                 c:['未分類（要確認）'],        k:'none'},
+  {id:7, key:'S008', m:10, d:22, amt:20000, v:'ホテルグランデ',t:'F興業 懇親会 山田太郎',           c:['F興業'],                    k:'company'},
+  {id:8, key:'S009', m:11, d:8,  amt:6000,  v:'和菓子まつ',    t:'あいさつ回り 手土産 佐藤次郎',     c:['営業先複数・贈答(相手先不明)'], k:'bucket'},
+  {id:9, key:'S010', m:12, d:12, amt:18000, v:'割烹あおい',    t:'G測量 忘年会 接待 高橋四郎',       c:['G測量'],                    k:'company'},
+  {id:10,key:'S011', m:1,  d:16, amt:25000, v:'市民会館',      t:'賀詞交歓会 参加 田中五郎',         c:['各種会合・研修'],          k:'bucket'},
+  {id:11,key:'S012', m:2,  d:6,  amt:11000, v:'焼肉大山',      t:'H工務店 会食 鈴木三郎',           c:['H工務店'],                  k:'company'},
+  {id:12,key:'S013', m:3,  d:25, amt:40000, v:'名店街ギフト',  t:'歳暮 取引先',                     c:['中元・歳暮(相手先不明)'],  k:'bucket'},
+  {id:13,key:'S014', m:6,  d:11, amt:14000, v:'割烹あおい',    t:'I造園 会食 山田太郎',             c:['I造園'],                    k:'company'}
+];
+
+// ---- 架空の取引先・カテゴリ辞書（すべてダミー） ----
+const SAMPLE_CANDS=['A建設','B工業','C組','D道路','E建材','F興業','G測量','H工務店','I造園','J商事','K運輸','L重機','M土木','N開発','O塗装',
+  '営業先複数・贈答(相手先不明)','中元・歳暮(相手先不明)','慶弔・見舞','各種会合・研修','協賛金・祝儀','専門家・その他','未分類（要確認）'];
+const SAMPLE_MASTER=['A建設','B工業','C組','D道路','E建材','F興業','G測量','H工務店','I造園','J商事','K運輸','L重機','M土木','N開発','O塗装'];
+
+const DATA={txs:SAMPLE_TXS, FM:[7,8,9,10,11,12,1,2,3,4,5,6]};
+const CFG={
+  terms:[['A建設','A建設'],['B工業','B工業'],['C組','C組'],['D道路','D道路'],['E建材','E建材'],
+    ['F興業','F興業'],['G測量','G測量'],['H工務店','H工務店'],['I造園','I造園'],['J商事','J商事'],
+    ['K運輸','K運輸'],['L重機','L重機'],['M土木','M土木'],['N開発','N開発'],['O塗装','O塗装']],
+  buckets:[
+    ['弁護士|税理士|会計事務所|先生|審査人|ISO','専門家・その他'],
+    ['香典|葬儀|逝去|生花|花代|お見舞|見舞|初盆|尊父|快気|お別れ会|社葬|お礼周り','慶弔・見舞'],
+    ['結婚祝|祝い|ご祝儀|協賛金','協賛金・祝儀'],
+    ['賀詞交歓|交流会|懇親会|新年会|研修|視察|慰労会|建設業部会|商工会|会員交流|夏季交流|会合|部会|囲む会','各種会合・研修'],
+    ['あいさつ回り|挨拶回り|営業先|取引先贈答|取引先手土産|贈答品|来客用','営業先複数・贈答(相手先不明)'],
+    ['中元|歳暮','中元・歳暮(相手先不明)']
+  ],
+  cands:SAMPLE_CANDS.slice(),
+  FM:[7,8,9,10,11,12,1,2,3,4,5,6],
+  master:SAMPLE_MASTER.slice()
+};
+const FM=CFG.FM, MONTHS=FM.map(m=>m+'月');
+const CLI_NONE='未分類（要確認）', STAFF_NONE='担当者不明（要確認）';
+let NONE=CLI_NONE;
+const CLI_BUCKETS=new Set(CFG.buckets.map(b=>b[1]).concat([CLI_NONE]));
+const BRX=CFG.buckets.map(([p,n])=>[new RegExp(p),n]);
+// ===== 担当者（社員）軸：架空のダミー名 =====
+let STAFF=['山田太郎','佐藤次郎','鈴木三郎','高橋四郎','田中五郎','伊藤六郎','渡辺七郎'];
+const DEPT=['社長','副社長','専務','常務','会長','営業部','環境','土木部','品質','安全','総務'];  // 「営業」は「営業部」に統合
+const DEPT_ALIAS={'営業':'営業部'};                                   // 摘要の表記ゆれを正規化
+const STAFF_BUCKETS=new Set(DEPT.concat([STAFF_NONE]));
+const toksS=s=>(s||'').split(/[\s　、,，・\/／]+/).filter(Boolean);
+function classifyStaff(tekiyo){const T=toksS(tekiyo);
+  const p=[...new Set(T.filter(x=>STAFF.includes(x)))]; if(p.length)return{s:p,sk:'company'};
+  const d=[...new Set(T.filter(x=>DEPT.includes(x)||DEPT_ALIAS[x]).map(x=>DEPT_ALIAS[x]||x))]; if(d.length)return{s:d,sk:'bucket'};
+  return{s:[STAFF_NONE],sk:'none'};}
+let BUCKETS=CLI_BUCKETS;
+let CLI_CANDS=CFG.cands.slice();
+let SCANDS=STAFF.concat(DEPT);
+['土木部','営業部'].forEach(x=>{SCANDS=SCANDS.filter(c=>c!==x);SCANDS.unshift(x);});   // 担当者別プルダウンの先頭に社内部署を表示
+let CANDS=CLI_CANDS;
+let AXIS='client'; // 集計軸 'client'（相手先）/ 'staff'（担当者）
+// アクティブ軸を t.c 系に載せ替える / 退避する
+function setActive(t){const S=AXIS==='staff';
+  t.c=(S?t.cStaff:t.cCli)||[]; t.oc=(S?t.ocStaff:t.ocCli)||[]; t.k=(S?t.kStaff:t.kCli)||'none';
+  t.man=S?!!t.manStaff:!!t.manCli; t.dict=S?!!t.dictStaff:!!t.dictCli;}
+function stash(t){const S=AXIS==='staff';
+  if(S){t.cStaff=t.c;t.ocStaff=t.oc;t.kStaff=t.k;t.manStaff=t.man;t.dictStaff=t.dict;}
+  else{t.cCli=t.c;t.ocCli=t.oc;t.kCli=t.k;t.manCli=t.man;t.dictCli=t.dict;}}
+function normalizeTx(t){ // 旧データ（軸フィールド無し）を補完
+  if(t.cCli===undefined){t.cCli=(t.c||[]).slice();t.ocCli=(t.oc||t.c||[]).slice();t.kCli=t.k||'none';t.manCli=!!t.man;t.dictCli=!!t.dict;}
+  if(t.cStaff===undefined){const st=classifyStaff(t.t);t.cStaff=st.s.slice();t.ocStaff=st.s.slice();t.kStaff=st.sk;t.manStaff=false;t.dictStaff=false;}
+  else if(!t.manStaff&&(t.kStaff==='gift'||(Array.isArray(t.cStaff)&&t.cStaff.indexOf('手土産（共通）')>=0))){
+    const st=classifyStaff(t.t);t.cStaff=st.s.slice();t.ocStaff=st.s.slice();t.kStaff=st.sk;}
+  if(Array.isArray(t.cStaff))t.cStaff=[...new Set(t.cStaff.map(x=>x==='営業'?'営業部':x))];
+  if(Array.isArray(t.ocStaff))t.ocStaff=[...new Set(t.ocStaff.map(x=>x==='営業'?'営業部':x))];
+  setActive(t);return t;}
+const norm=s=>(s||'').normalize('NFKC').replace(/[\s　]/g,'');
+// ---- persistence keys（デモ用に独立キー） ----
+const PKEY='settai_demo_prog', CKEY='settai_demo_corr', MKEY='settai_demo_cands', SCKEY='settai_demo_scorr', SMKEY='settai_demo_scands';
+// ---- 期（年度）切替 ----
+const PPKEY='settai_demo_periods', PAKEY='settai_demo_active';
+let PERIODS=[], PERIOD='40期';
+function progKey(){return PKEY+'::'+PERIOD;}
+function savePeriods(){try{localStorage.setItem(PPKEY,JSON.stringify(PERIODS));localStorage.setItem(PAKEY,PERIOD);}catch(e){}}
+function loadPeriods(){
+  try{const s=localStorage.getItem(PPKEY);if(s)PERIODS=JSON.parse(s);}catch(e){}
+  try{const a=localStorage.getItem(PAKEY);if(a)PERIOD=a;}catch(e){}
+  if(!PERIODS.length){PERIODS=['40期'];PERIOD='40期';savePeriods();}
+  if(!PERIODS.includes(PERIOD))PERIOD=PERIODS[0]||'40期';}
+function showLoading(msg){const el=document.getElementById('loading');if(!el)return;const m=document.getElementById('loadmsg');if(m)m.textContent=msg||'読み込み中…';el.classList.add('on');}
+function hideLoading(){const el=document.getElementById('loading');if(el)el.classList.remove('on');}
+function renderPeriodSel(){const sel=document.getElementById('periodSel');if(!sel)return;
+  sel.innerHTML=PERIODS.map(p=>`<option value="${esc(p)}"${p===PERIOD?' selected':''}>${esc(p)}</option>`).join('');
+  sel.onchange=()=>switchPeriod(sel.value);}
+async function switchPeriod(p){if(!p||p===PERIOD){return;}
+  PERIOD=p;savePeriods();TX=[];DSNAME='（未取込）';
+  if(!autoload()){TX=txFromEmbedded();DSNAME='サンプルデータ';}
+  render();updateAutoStat();renderPeriodSel();}
+function addPeriod(){const name=prompt('新しい期の名前を入力してください（例：41期）');if(!name)return;const nm=name.trim();if(!nm)return;
+  if(PERIODS.includes(nm)){switchPeriod(nm);return;}PERIODS.push(nm);savePeriods();renderPeriodSel();switchPeriod(nm);}
+function renamePeriod(){const name=prompt('この期の名前を変更',PERIOD);if(!name)return;const nm=name.trim();if(!nm||nm===PERIOD)return;
+  if(PERIODS.includes(nm)){alert('その名前は既にあります。');return;}
+  try{const cur=localStorage.getItem(progKey());if(cur){localStorage.setItem(PKEY+'::'+nm,cur);localStorage.removeItem(progKey());}}catch(e){}
+  PERIODS[PERIODS.indexOf(PERIOD)]=nm;PERIOD=nm;savePeriods();renderPeriodSel();}
+function delPeriod(){if(PERIODS.length<=1){alert('最後の期は削除できません。');return;}
+  if(!confirm(PERIOD+' をこの端末の一覧から外します。よろしいですか？'))return;
+  try{localStorage.removeItem(progKey());}catch(e){}
+  PERIODS=PERIODS.filter(x=>x!==PERIOD);PERIOD=PERIODS[0];savePeriods();TX=[];DSNAME='（未取込）';
+  if(!autoload()){TX=txFromEmbedded();DSNAME='サンプルデータ';}render();updateAutoStat();renderPeriodSel();}
+let AUTO=false;(function(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');AUTO=true;}catch(e){}})();
+let CLI_CORR={}, SCORR={}, CORR=CLI_CORR;  // normTekiyo -> [names]（軸別の学習辞書）
+function loadCorr(){if(!AUTO)return;try{const s=localStorage.getItem(CKEY);if(s)CLI_CORR=JSON.parse(s);}catch(e){}try{const s=localStorage.getItem(SCKEY);if(s)SCORR=JSON.parse(s);}catch(e){}CORR=AXIS==='staff'?SCORR:CLI_CORR;}
+function saveCorr(){if(!AUTO)return;try{localStorage.setItem(AXIS==='staff'?SCKEY:CKEY,JSON.stringify(CORR));}catch(e){}}
+function loadCands(){if(!AUTO)return;try{const s=localStorage.getItem(MKEY);if(s){JSON.parse(s).forEach(c=>{if(!CLI_CANDS.includes(c))CLI_CANDS.push(c);});}}catch(e){}try{const s=localStorage.getItem(SMKEY);if(s){JSON.parse(s).forEach(c=>{if(!SCANDS.includes(c))SCANDS.push(c);});}}catch(e){}}
+function saveCands(){if(!AUTO)return;try{localStorage.setItem(AXIS==='staff'?SMKEY:MKEY,JSON.stringify(CANDS));}catch(e){}}
+function applyCorrBoth(t){const key=norm(t.t);if(CLI_CORR[key]){t.cCli=CLI_CORR[key].slice();t.dictCli=true;}if(SCORR[key]){t.cStaff=[...new Set(SCORR[key].map(x=>x==='営業'?'営業部':x))];t.dictStaff=true;}}
+function refreshCands(){document.getElementById('cands').innerHTML=CANDS.map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');}
+// ---- classifier ----
+function classify(tekiyo){const tk=norm(tekiyo);const hits=[];
+  for(const [k,c] of CFG.terms){if(k&&tk.includes(k)&&!hits.includes(c))hits.push(c);}
+  if(hits.length)return{c:hits,k:'company'};
+  for(const [rx,n] of BRX){if(rx.test(tk))return{c:[n],k:'bucket'};}
+  return{c:[CLI_NONE],k:'none'};}
+// ---- state ----
+let TX=[], filter='all', query='', pview='total', DSNAME='（未取込）', COLLAPSED=new Set();
+function txFromEmbedded(){return DATA.txs.map(t=>{const st=classifyStaff(t.t);const o={id:t.id,key:t.key||'',m:t.m,d:t.d||0,amt:t.amt,v:t.v,t:t.t,done:false,
+  cCli:t.c.slice(),ocCli:t.c.slice(),kCli:t.k,manCli:false,dictCli:false,
+  cStaff:st.s.slice(),ocStaff:st.s.slice(),kStaff:st.sk,manStaff:false,dictStaff:false};
+  applyCorrBoth(o);setActive(o);return o;});}
+function nextId(){return TX.reduce((mx,t)=>Math.max(mx,t.id),-1)+1;}
+function applyCorr(t){const key=norm(t.t);if(CORR[key]){t.c=CORR[key].slice();t.dict=true;}}
+const yen=n=>n.toLocaleString('ja-JP');
+const fidx=m=>{const i=FM.indexOf(m);return i<0?99:i;};   // 7月→0 … 6月→11（会計年度順）
+const cmpFiscal=(a,b)=>fidx(a.m)-fidx(b.m)||((a.d||0)-(b.d||0))||(a.id-b.id);
+function kindOf(t){if(t.man||JSON.stringify(t.c)!==JSON.stringify(t.oc)){return t.dict&&!t.man?'learned':'edited';}return t.k;}
+function classOfClient(c){if(c===NONE)return'none';if(BUCKETS.has(c))return'bucket';return'co';}
+function render(){
+  const pane=document.getElementById('mainpane');const sc=pane.scrollTop;
+  let list=TX.filter(t=>{const k=kindOf(t);
+    if(filter==='none'&&k!=='none')return false;
+    if(filter==='bucket'&&k!=='bucket')return false;
+    if(filter==='edited'&&!(k==='edited'||k==='learned'))return false;
+    if(filter==='multi'&&t.c.length<2)return false;
+    if(filter==='unchecked'&&t.done)return false;
+    if(filter==='checked'&&!t.done)return false;
+    if(query){const s=(t.t+' '+t.v+' '+t.c.join(' ')).toLowerCase();if(!s.includes(query.toLowerCase()))return false;}
+    return true;});
+  list.sort(cmpFiscal);   // 取込順によらず7月〜6月（会計年度順）に自動整列
+  const groups=[];let curM='__';
+  list.forEach(t=>{const mk=(t.m==null?'x':String(t.m));if(mk!==curM){curM=mk;groups.push({mk:mk,m:t.m,rows:[]});}groups[groups.length-1].rows.push(t);});
+  let html='';
+  groups.forEach(g=>{const sub=g.rows.reduce((s,t)=>s+t.amt,0);const dn=g.rows.filter(t=>t.done).length;const col=COLLAPSED.has(g.mk);
+    html+=`<tr class="mhdr" data-m="${g.mk}"><td colspan="6"><span class="caret">${col?'▶':'▼'}</span>${g.m?g.m+'月':'月不明'}<span class="mcnt">${g.rows.length}件</span><span class="msub">¥${yen(sub)}</span><span class="mdone">✓${dn}/${g.rows.length}</span></td></tr>`;
+    if(!col)html+=g.rows.map(rowHtml).join('');});
+  document.getElementById('rows').innerHTML=html||'<tr><td colspan=6 style="color:#8b98a9;padding:20px">該当なし</td></tr>';
+  bindRows();computePivot();renderPivot();renderStat();pane.scrollTop=sc;
+  if(document.getElementById('overlay').classList.contains('on'))renderModal();}
+function rowHtml(t){const k=kindOf(t);
+  const kl=klOf(k);
+  const n=t.c.length;const base=Math.floor(t.amt/n);
+  const chips=t.c.map((c,i)=>`<span class="chip ${classOfClient(c)}">${esc(c)}${n>1?`<span class="split">¥${yen(base+(i===0?t.amt-base*n:0))}</span>`:''}<span class="x" data-id="${t.id}" data-i="${i}">×</span></span>`).join('');
+  return `<tr data-id="${t.id}" class="${t.done?'done':(k==='none'?'need':'')}">
+    <td>${t.m?t.m+'月':'-'}</td><td class="num">${yen(t.amt)}</td>
+    <td><div class="tek">${esc(t.t)}</div><div class="ven">${esc(t.v)}</div></td>
+    <td style="text-align:center;vertical-align:middle"><input type="checkbox" class="ck" data-ck="${t.id}" ${t.done?'checked':''}></td>
+    <td>${chips}<input class="addc" autocomplete="off" placeholder="${AXIS==='staff'?'＋担当者を入力':'＋相手先を入力'}" data-add="${t.id}">${n>1?'<span class="split">均等按分</span>':''}</td>
+    <td><span class="kind k-${k}">${kl}</span></td></tr>`;}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function recordCorr(t){t.man=true;const key=norm(t.t);if(t.c.length&&!(t.c.length===1&&t.c[0]===NONE)){CORR[key]=t.c.slice();}else{delete CORR[key];}saveCorr();stash(t);}
+function bindRows(){
+  document.querySelectorAll('.mhdr').forEach(h=>h.onclick=()=>{const k=h.dataset.m;if(COLLAPSED.has(k))COLLAPSED.delete(k);else COLLAPSED.add(k);render();});
+  document.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{const t=TX.find(a=>a.id==c.dataset.ck);t.done=c.checked;persist();render();});
+  document.querySelectorAll('.x').forEach(x=>x.onclick=()=>{const t=TX.find(a=>a.id==x.dataset.id);t.c.splice(+x.dataset.i,1);if(t.c.length===0)t.c=[NONE];recordCorr(t);persist();render();});
+  document.querySelectorAll('.addc').forEach(inp=>{
+    inp.oninput=()=>acShow(inp);
+    inp.onfocus=()=>acShow(inp);
+    inp.onblur=()=>setTimeout(acHide,150);
+    inp.onkeydown=e=>{
+      if(e.key==='ArrowDown'){e.preventDefault();acMove(1);}
+      else if(e.key==='ArrowUp'){e.preventDefault();acMove(-1);}
+      else if(e.key==='Enter'){e.preventDefault();
+        if(AC.inp===inp&&AC.active>=0&&AC.items[AC.active]!=null){acPick(inp,AC.items[AC.active]);}
+        else commitAdd(inp);}
+      else if(e.key==='Escape'){acHide();}
+    };});}
+// ---- 予測入力（オートコンプリート） ----
+const AC={inp:null,items:[],active:-1};
+function acMatches(q){
+  if(!q)return CANDS.slice(0,15);
+  const ql=q.toLowerCase(),nq=norm(q).toLowerCase();
+  const scored=[];
+  for(const c of CANDS){const cl=c.toLowerCase(),nc=norm(c).toLowerCase();
+    if(cl.includes(ql)||nc.includes(nq)){const pre=(cl.startsWith(ql)||nc.startsWith(nq))?0:1;scored.push([pre,c.length,c]);}}
+  scored.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  return scored.slice(0,15).map(x=>x[2]);}
+function hi(c,q){if(!q)return esc(c);const i=c.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return esc(c);return esc(c.slice(0,i))+'<b>'+esc(c.slice(i,i+q.length))+'</b>'+esc(c.slice(i+q.length));}
+function acShow(inp){const q=inp.value.trim();const items=acMatches(q);
+  AC.inp=inp;AC.items=items.slice();AC.active=items.length?0:-1;
+  const box=document.getElementById('ac');
+  const exact=CANDS.some(c=>c===q);
+  let html=items.map((c,i)=>`<div class="acitem${i===AC.active?' on':''}" data-i="${i}">${hi(c,q)}</div>`).join('');
+  if(q&&!exact){AC.items.push('__NEW__:'+q);html+=`<div class="acitem acnew" data-i="${items.length}">＋「${esc(q)}」を新規追加<span class="mk">Enter</span></div>`;if(AC.active<0)AC.active=items.length;}
+  if(!html){acHide();return;}
+  box.innerHTML=html;
+  const r=inp.getBoundingClientRect();
+  box.style.left=r.left+'px';box.style.top=(r.bottom+2)+'px';box.style.minWidth=Math.max(r.width,200)+'px';
+  box.style.display='block';
+  box.querySelectorAll('.acitem').forEach(el=>{el.onmousedown=e=>{e.preventDefault();const it=AC.items[+el.dataset.i];acPick(inp,it.startsWith&&it.startsWith('__NEW__:')?it.slice(8):it);};});}
+function acHide(){const b=document.getElementById('ac');if(b)b.style.display='none';AC.inp=null;AC.items=[];AC.active=-1;}
+function acMove(d){if(!AC.items.length)return;AC.active=(AC.active+d+AC.items.length)%AC.items.length;
+  const box=document.getElementById('ac');box.querySelectorAll('.acitem').forEach((el,i)=>el.classList.toggle('on',i===AC.active));
+  const on=box.querySelector('.acitem.on');if(on)on.scrollIntoView({block:'nearest'});}
+function acPick(inp,val){if(val&&val.startsWith('__NEW__:'))val=val.slice(8);inp.value=val;acHide();commitAdd(inp);}
+function commitAdd(inp){const v=inp.value.trim();if(!v)return;const t=TX.find(a=>a.id==inp.dataset.add);
+  if(t.c.length===1&&t.c[0]===NONE)t.c=[];if(!t.c.includes(v))t.c.push(v);
+  if(!CANDS.includes(v)){CANDS.push(v);saveCands();refreshCands();}
+  inp.value='';recordCorr(t);persist();render();}
+let PIV={};
+function computePivot(){const piv={},cnt={};
+  TX.forEach(t=>{const cs=t.c.length?t.c:[NONE];const n=cs.length;const base=Math.floor(t.amt/n);let rem=t.amt-base*n;
+    cs.forEach((c,i)=>{const a=base+(i===0?rem:0);piv[c]=piv[c]||{};piv[c][t.m]=(piv[c][t.m]||0)+a;cnt[c]=(cnt[c]||0)+1;});});
+  const clients=Object.keys(piv).sort((a,b)=>tot(piv[b])-tot(piv[a]));
+  let grand=0,gm={};clients.forEach(c=>{grand+=tot(piv[c]);FM.forEach(m=>gm[m]=(gm[m]||0)+(piv[c][m]||0));});
+  PIV={piv,cnt,clients,grand,gm};}
+function tot(mv){return Object.values(mv).reduce((s,x)=>s+x,0);}
+function renderPivot(){document.getElementById('gtot').textContent=yen(PIV.grand);
+  document.getElementById('vTotal').className='btn mini '+(pview==='total'?'':'sec');
+  document.getElementById('vMonth').className='btn mini '+(pview==='month'?'':'sec');
+  document.getElementById('pivotArea').innerHTML=pview==='total'?totalView():monthView(false);}
+function totalView(){const{piv,cnt,clients}=PIV;const max=clients.length?tot(piv[clients[0]]):1;let h='<table class="pv"><tbody>';
+  clients.forEach(c=>{const rt=tot(piv[c]);const w=Math.max(2,rt/max*100);
+    h+=`<tr class="prow"><td class="cname" title="${esc(c)}"><span class="tag t-${classOfClient(c)}"></span>${esc(c)}</td><td class="pcnt">${cnt[c]}件</td><td class="pamt">${yen(rt)}</td></tr><tr><td colspan="3" class="barcell"><div class="barfill" style="width:${w}%"></div></td></tr>`;});
+  return h+'</tbody></table>';}
+function monthView(big){const{piv,clients,gm,grand}=PIV;
+  let h=`<div class="mtx-wrap" ${big?'style="max-height:none"':''}><table class="mtx"><thead><tr><th>相手先</th>`+MONTHS.map(m=>`<th class="num">${m}</th>`).join('')+`<th class="num">合計</th></tr></thead><tbody>`;
+  clients.forEach(c=>{const mv=piv[c];const rt=tot(mv);
+    h+=`<tr><td title="${esc(c)}"><span class="tag t-${classOfClient(c)}"></span>${esc(c)}</td>`+FM.map(m=>`<td class="num">${mv[m]?yen(mv[m]):'<span class=dot>-</span>'}</td>`).join('')+`<td class="num"><b>${yen(rt)}</b></td></tr>`;});
+  return h+`<tr class="grand"><td>合計</td>`+FM.map(m=>`<td class="num">${yen(gm[m]||0)}</td>`).join('')+`<td class="num">${yen(grand)}</td></tr></tbody></table></div>`;}
+function setView(v){pview=v;renderPivot();}
+function klOf(k){const S=AXIS==='staff';return (S?{company:'担当者',bucket:'部署・役職',none:'不明',edited:'編集済み',learned:'自動修正'}:{company:'会社判定',bucket:'カテゴリ',none:'未分類',edited:'編集済み',learned:'自動修正'})[k];}
+function switchAxis(ax){if(ax===AXIS)return;
+  TX.forEach(stash);                       // 現在の軸の編集内容を退避
+  AXIS=ax;
+  NONE   = ax==='staff'?STAFF_NONE:CLI_NONE;
+  BUCKETS= ax==='staff'?STAFF_BUCKETS:CLI_BUCKETS;
+  CANDS  = ax==='staff'?SCANDS:CLI_CANDS;
+  CORR   = ax==='staff'?SCORR:CLI_CORR;
+  TX.forEach(setActive);                   // 対象軸の内容を作業フィールドへ
+  refreshCands();
+  document.getElementById('axClient').className='btn mini '+(ax==='client'?'':'sec');
+  document.getElementById('axStaff').className ='btn mini '+(ax==='staff'?'':'sec');
+  const h2=document.getElementById('pivH2'); if(h2)h2.childNodes[0].nodeValue=(ax==='staff'?'担当者別 集計 ':'相手先別 集計 ');
+  const th=document.getElementById('cliTh'); if(th)th.textContent=(ax==='staff'?'担当者':'相手先')+'（クリックで編集・追加／複数は均等按分）';
+  const hint=document.getElementById('axHint'); if(hint)hint.textContent=(ax==='staff'?'摘要から社員を判定・複数人は按分':'摘要から取引先を判定');
+  const q=document.getElementById('q'); if(q)q.placeholder=(ax==='staff'?'摘要・支払先・担当者で検索…':'摘要・支払先・相手先で検索…');
+  filter='all';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  render();}
+function openModal(){document.getElementById('overlay').classList.add('on');renderModal();}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+function renderModal(){document.getElementById('modalPivot').innerHTML=monthView(true);document.getElementById('mtot').textContent='総額 '+yen(PIV.grand)+'円 / '+PIV.clients.length+'相手先';}
+document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')closeModal();};
+function renderStat(){const none=TX.filter(t=>kindOf(t)==='none');const ed=TX.filter(t=>{const k=kindOf(t);return k==='edited'||k==='learned';}).length;
+  const dn=TX.filter(t=>t.done).length;const pct=TX.length?Math.round(dn/TX.length*100):0;
+  document.getElementById('stat').innerHTML=`<div>総明細 <b>${TX.length}</b></div><div>未分類 <b class="${none.length?'miss':''}">${none.length}</b> / <span class="mono">${yen(none.reduce((s,t)=>s+t.amt,0))}</span>円</div><div>編集/修正 <b style="color:var(--accent)">${ed}</b></div><div>✓ 確認済 <b style="color:#2ea043">${dn}</b> / ${TX.length}（${pct}%）</div>`;
+  document.getElementById('progbar').style.width=pct+'%';
+  document.getElementById('dsinfo').textContent='現在: '+DSNAME+'（'+TX.length+'件）';}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');filter=t.dataset.f;render();});
+document.getElementById('q').oninput=e=>{query=e.target.value;render();};
+document.onkeydown=e=>{if(e.key==='Escape')closeModal();};
+document.getElementById('mainpane').addEventListener('scroll',acHide);
+window.addEventListener('resize',acHide);
+// ---- import ----
+function findCol(hdr,names){
+  for(const nm of names){for(let i=0;i<hdr.length;i++){if((hdr[i]||'')===nm)return i;}}   // 完全一致を優先
+  for(const nm of names){for(let i=0;i<hdr.length;i++){if((hdr[i]||'').indexOf(nm)>=0)return i;}} // 次に部分一致
+  return -1;}
+function parseImport(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.length);
+  if(!lines.length)throw new Error('空のファイルです');
+  const delim=lines[0].indexOf('\t')>=0?'\t':',';
+  const hdr=lines[0].split(delim);
+  let iM=findCol(hdr,['月日']), iA=findCol(hdr,['取引金額','借方']), iV=findCol(hdr,['取引先名']), iT=findCol(hdr,['元帳摘要','摘要']);
+  let iR=findCol(hdr,['Ｒ－Ｎｏ．','R-No','R-No.','ＲＮｏ']);
+  const iB=findCol(hdr,['伝番']), iS=findCol(hdr,['証番']);
+  if(iM<0)iM=0; if(iA<0)iA=14; if(iV<0)iV=19; if(iT<0)iT=21; if(iR<0)iR=25;
+  const out=[];
+  for(let li=1;li<lines.length;li++){const r=lines[li].split(delim);if(r.length<=Math.max(iM,iA,iV,iT))continue;
+    const amt=parseInt((r[iA]||'').replace(/[,\s]/g,''),10)||0;
+    const v=(r[iV]||'').trim();const tk=(r[iT]||'').trim();
+    if(v===''&&amt===0&&tk==='')continue;
+    const mm=(r[iM]||'').replace('*','').match(/(\d+)\s*\.\s*(\d+)/);const m=mm?parseInt(mm[1],10):null;const dd=mm?parseInt(mm[2],10):0;
+    let key=(iR>=0?(r[iR]||'').trim():'');
+    if(!key)key=[(r[iM]||'').trim(),(iB>=0?r[iB]:''),(iS>=0?r[iS]:''),amt,tk].join('|');
+    const cl=classify(tk);const st=classifyStaff(tk);
+    const t={id:0,key:key,m:m,d:dd,amt:amt,v:v,t:tk,done:false,
+      cCli:cl.c.slice(),ocCli:cl.c.slice(),kCli:cl.k,manCli:false,dictCli:false,
+      cStaff:st.s.slice(),ocStaff:st.s.slice(),kStaff:st.sk,manStaff:false,dictStaff:false};
+    applyCorrBoth(t);setActive(t);out.push(t);}
+  return out;}
+function readAB(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsArrayBuffer(file);});}
+function decodeText(buf){
+  const b=new Uint8Array(buf);
+  if(b[0]===0xEF && b[1]===0xBB && b[2]===0xBF) return new TextDecoder('utf-8').decode(b);
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(b); }catch(_){}
+  return new TextDecoder('shift-jis',{fatal:false}).decode(b);
+}
+async function importFiles(files){
+  files=Array.from(files||[]).filter(f=>f&&/\.(txt|csv|tsv)$/i.test(f.name));
+  if(!files.length){alert('txt / CSV ファイルを指定してください。');return;}
+  const have=new Set(TX.map(t=>t.key).filter(Boolean));const seen=new Set();
+  let allFresh=[],totalRows=0,dup=0;const per=[];
+  for(const f of files){let rows;
+    try{rows=parseImport(decodeText(await readAB(f)));}catch(err){per.push('・'+f.name+'：読込失敗');continue;}
+    let fr=0;
+    for(const t of rows){totalRows++;if(!t.key||have.has(t.key)||seen.has(t.key)){dup++;continue;}seen.add(t.key);allFresh.push(t);fr++;}
+    per.push('・'+f.name+'：'+rows.length+'件（新規'+fr+'）');}
+  if(!allFresh.length){alert('取込 '+totalRows+'件はすべて既存/重複のため追加しませんでした。\n\n'+per.join('\n'));return;}
+  if(!confirm(files.length+'ファイルを取り込みます。\n\n'+per.join('\n')+'\n\n合計：新規'+allFresh.length+'件を追加、重複'+dup+'件スキップ\n現在の'+TX.length+'件に追加します。よろしいですか？'))return;
+  let id=nextId();allFresh.forEach(t=>t.id=id++);TX=TX.concat(allFresh);
+  DSNAME=(TX.length===allFresh.length)?files.map(f=>f.name).join(' / '):DSNAME+' +'+files.length+'ファイル';
+  filter='all';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  const learned=allFresh.filter(t=>t.dict).length;persist();render();
+  alert('取込完了\n・新規追加：'+allFresh.length+'件\n・重複スキップ：'+dup+'件\n・学習辞書から自動修正：'+learned+'件\n・要確認（未分類）：'+allFresh.filter(t=>kindOf(t)==='none').length+'件');}
+document.getElementById('impf').onchange=e=>{importFiles(e.target.files);e.target.value='';};
+// ---- ドラッグ＆ドロップ ----
+const dz=document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();dz.classList.add('drag');}));
+['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();if(!dz.contains(e.relatedTarget))dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();dz.classList.remove('drag');if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length)importFiles(e.dataTransfer.files);});
+['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#dropzone'))return;e.preventDefault();}));
+// ---- persistence（デモ版：ローカルのみ） ----
+function persist(){if(!AUTO)return;try{localStorage.setItem(progKey(),JSON.stringify({v:2,saved:Date.now(),ds:DSNAME,tx:TX}));}catch(e){AUTO=false;}updateAutoStat();}
+function autoload(){if(!AUTO)return false;try{const s=localStorage.getItem(progKey());if(!s)return false;const d=JSON.parse(s);if(!d.tx)return false;TX=d.tx.map(t=>normalizeTx({man:false,dict:false,...t}));DSNAME=d.ds||DSNAME;return true;}catch(e){return false;}}
+function updateAutoStat(){const el=document.getElementById('autostat');if(!el)return;
+  if(AUTO){let t='';try{const s=localStorage.getItem(progKey());if(s){const d=JSON.parse(s);t=' （最終保存 '+new Date(d.saved).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+'）';}}catch(e){}
+    const nc=Object.keys(CORR).length;
+    el.innerHTML='🔄 自動保存 ON（この端末のみ）'+t+'　｜　学習辞書 '+nc+'件';el.style.color='#3fb950';}
+  else{el.innerHTML='⚠ この環境では自動保存が使えません。「ファイル保存／読込」で管理してください';el.style.color='var(--none)';}}
+function clearAuto(){if(!confirm('自動保存された作業内容を消去します（学習辞書は残ります）。よろしいですか？'))return;try{localStorage.removeItem(progKey());}catch(e){}updateAutoStat();}
+function resetDemo(){if(!confirm('サンプルデータに戻します。この端末で加えた変更は消えます。よろしいですか？'))return;
+  try{localStorage.removeItem(progKey());}catch(e){}
+  TX=txFromEmbedded();DSNAME='サンプルデータ';filter='all';COLLAPSED=new Set();
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));
+  persist();render();}
+function csv(rows){return'﻿'+rows.map(r=>r.map(c=>{c=(c==null?'':''+c);return/[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',')).join('\n');}
+function dl(name,text,type){const b=new Blob([text],{type:type||'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function exportPivot(){const{piv,clients}=PIV;const rows=[[(AXIS==='staff'?'担当者':'相手先'),...MONTHS,'合計']];clients.forEach(c=>{const mv=piv[c];let rt=0;const line=[c];FM.forEach(m=>{line.push(mv[m]||0);rt+=(mv[m]||0);});line.push(rt);rows.push(line);});dl((AXIS==='staff'?'担当者別集計':'相手先別集計')+'.csv',csv(rows));}
+function exportDetail(){const rows=[['月',(AXIS==='staff'?'担当者':'相手先'),'按分金額','伝票金額','支払先','摘要','区分','確認済']];
+  TX.slice().sort(cmpFiscal).forEach(t=>{const cs=t.c.length?t.c:[NONE];const n=cs.length;const base=Math.floor(t.amt/n);let rem=t.amt-base*n;const kl=klOf(kindOf(t));
+    cs.forEach((c,i)=>{rows.push([t.m?t.m+'月':'',c,base+(i===0?rem:0),t.amt,t.v,t.t,kl,t.done?'✓':'']);});});dl('明細_'+(AXIS==='staff'?'担当者':'相手先')+'判定.csv',csv(rows));}
+function saveProg(){TX.forEach(stash);dl('振り分け進捗.json',JSON.stringify({v:3,saved:Date.now(),ds:DSNAME,tx:TX,corr:CLI_CORR,cands:CLI_CANDS,scorr:SCORR,scands:SCANDS}),'application/json');}
+document.getElementById('loadf').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d.tx){TX=d.tx.map(t=>normalizeTx({man:false,dict:false,...t}));DSNAME=d.ds||DSNAME;}
+    if(d.corr){CLI_CORR=d.corr;}if(d.scorr){SCORR=d.scorr;}CORR=AXIS==='staff'?SCORR:CLI_CORR;saveCorr();
+    if(d.cands){d.cands.forEach(c=>{if(!CLI_CANDS.includes(c))CLI_CANDS.push(c);});}if(d.scands){d.scands.forEach(c=>{if(!SCANDS.includes(c))SCANDS.push(c);});}
+    CANDS=AXIS==='staff'?SCANDS:CLI_CANDS;saveCands();refreshCands();
+    persist();render();alert('進捗を読み込みました。');}catch(err){alert('読込に失敗しました: '+err.message);}};
+  r.readAsText(f);e.target.value='';};
+function resetAll(){if(!confirm('相手先を自動判定の状態に戻します（チェックも解除）。学習辞書と取込データは保持します。よろしいですか？'))return;
+  TX.forEach(t=>{t.c=t.oc.slice();t.done=false;t.man=false;t.dict=false;});persist();render();}
+function clearAllTx(){if(!confirm('【'+PERIOD+'】の取り込みデータをすべて消去して空にします。\n※他の期のデータ・学習辞書・相手先マスタは残ります。\nよろしいですか？'))return;
+  TX=[];DSNAME='（未取込）';persist();render();}
+
+// ===== xlsx 書き出し（外部ライブラリ不要・オフライン対応） =====
+function _crcTable(){const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;}
+const CRCT=_crcTable();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRCT[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function u8(str){return new TextEncoder().encode(str);}
+function concatU8(arr){let len=arr.reduce((s,a)=>s+a.length,0);const out=new Uint8Array(len);let o=0;for(const a of arr){out.set(a,o);o+=a.length;}return out;}
+function w16(n){return new Uint8Array([n&0xFF,(n>>8)&0xFF]);}
+function w32(n){return new Uint8Array([n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>>24)&0xFF]);}
+function zipStore(files){
+  const locals=[],centrals=[];let offset=0;
+  for(const f of files){const name=u8(f.name);const data=f.data;const crc=crc32(data);
+    const lh=concatU8([w32(0x04034b50),w16(20),w16(0),w16(0),w16(0),w16(0),w32(crc),w32(data.length),w32(data.length),w16(name.length),w16(0),name,data]);
+    locals.push(lh);
+    const ch=concatU8([w32(0x02014b50),w16(20),w16(20),w16(0),w16(0),w16(0),w16(0),w32(crc),w32(data.length),w32(data.length),w16(name.length),w16(0),w16(0),w16(0),w16(0),w32(0),w32(offset),name]);
+    centrals.push(ch);offset+=lh.length;}
+  const cd=concatU8(centrals);const cdOff=offset;
+  const eocd=concatU8([w32(0x06054b50),w16(0),w16(0),w16(files.length),w16(files.length),w32(cd.length),w32(cdOff),w16(0)]);
+  return concatU8([...locals,cd,eocd]);
+}
+function xesc(s){return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function colLetter(n){let s='';n++;while(n>0){let m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-m-1)/26;}return s;}
+const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0;(#,##0);&quot;-&quot;"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>
+<fonts count="4"><font><sz val="11"/><name val="Yu Gothic"/></font><font><b/><sz val="11"/><name val="Yu Gothic"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Yu Gothic"/></font><font><b/><sz val="14"/><name val="Yu Gothic"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDEBF7"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="9">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+function sheetXml(sheet){
+  let cols='';
+  if(sheet.cols){cols='<cols>'+sheet.cols.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';}
+  let rows='';
+  sheet.rows.forEach((row,ri)=>{const r=ri+1;let cells='';
+    row.forEach((cell,ci)=>{if(cell==null)return;const ref=colLetter(ci)+r;const s=cell.s||0;
+      if(cell.t==='n'){cells+=`<c r="${ref}" s="${s}"><v>${cell.v}</v></c>`;}
+      else if(cell.v==null||cell.v===''){cells+=`<c r="${ref}" s="${s}"/>`;}
+      else{cells+=`<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xesc(cell.v)}</t></is></c>`;}});
+    rows+=`<row r="${r}">${cells}</row>`;});
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${rows}</sheetData></worksheet>`;
+}
+function buildXlsx(sheets){
+  const files=[];
+  files.push({name:'[Content_Types].xml',data:u8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`+sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+`</Types>`)});
+  files.push({name:'_rels/.rels',data:u8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)});
+  files.push({name:'xl/workbook.xml',data:u8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>`+sheets.map((s,i)=>`<sheet name="${xesc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+`</sheets></workbook>`)});
+  files.push({name:'xl/_rels/workbook.xml.rels',data:u8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`+sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)});
+  files.push({name:'xl/styles.xml',data:u8(STYLES)});
+  sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:u8(sheetXml(s))}));
+  return zipStore(files);
+}
+
+function exportXlsx(){
+  computePivot();
+  const {piv,cnt,clients}=PIV;
+  const totv=mv=>Object.values(mv).reduce((s,x)=>s+x,0);
+  const MASTER=new Set(AXIS==='staff'?STAFF:(CFG.master||[]));
+  function classOf2(c){if(c===NONE)return'none';if(BUCKETS.has(c))return'bucket';return MASTER.has(c)?'master':'new';}
+  const groups={master:[],new:[],bucket:[],none:[]};
+  clients.forEach(c=>groups[classOf2(c)].push(c));
+  for(const g in groups)groups[g].sort((a,b)=>totv(piv[b])-totv(piv[a]));
+  const MONTHS2=FM.map(m=>m+'月');
+  const _pn=parseInt(String(PERIOD).replace(/[^0-9]/g,''),10);
+  const curL =isNaN(_pn)?'当期':_pn+'期';
+  const prevL=isNaN(_pn)?'前期':(_pn-1)+'期';
+  const H=['区分',(AXIS==='staff'?'担当者':'相手先'),prevL+'売上高','粗利',curL+'売上高','粗利','粗利率','接待交際費合計','売上対比率'].concat(MONTHS2).concat(['合計','件数']);
+  const S={hdr:1,yen:2,txt:3,gh:4,tyen:5,tlbl:6,cnt:7,title:8};
+  const rows=[];
+  rows.push([{v:'接待交際費 '+(AXIS==='staff'?'担当者別':'相手先別')+'集計（税込・摘要判定）',s:S.title}]);
+  rows.push([{v:'月列: 7月〜6月 / 複数社は均等按分 / 売上・粗利欄は貼付用の空欄',s:0}]);
+  rows.push([]);
+  rows.push(H.map(x=>({v:x,s:S.hdr})));
+  const gLabel=AXIS==='staff'
+    ?{master:'①社員リスト',new:'②新規担当者（リスト外）',bucket:'③部署・役職',none:'④担当者不明（要確認）'}
+    :{master:'①'+curL+'リスト計上分',new:'②新規相手先（リスト外）',bucket:'③カテゴリ計上（相手先特定不可）',none:'④未分類（要確認）'};
+  function clientRow(c){const mv=piv[c];const r=[{s:S.txt},{v:c,s:S.txt},{s:S.txt},{s:S.txt},{s:S.txt},{s:S.txt},{s:S.txt},{v:totv(mv),t:'n',s:S.yen},{s:S.txt}];FM.forEach(m=>r.push({v:mv[m]||0,t:'n',s:S.yen}));r.push({v:totv(mv),t:'n',s:S.yen});r.push({v:cnt[c],t:'n',s:S.cnt});return r;}
+  let grand=0,gcnt=0;const gm={};
+  for(const g of ['master','new','bucket','none']){if(!groups[g].length)continue;
+    const gr=[{v:gLabel[g],s:S.gh}];for(let i=1;i<H.length;i++)gr.push({s:S.gh});rows.push(gr);
+    let sm={},sc=0,st=0;groups[g].forEach(c=>{rows.push(clientRow(c));const mv=piv[c];FM.forEach(m=>sm[m]=(sm[m]||0)+(mv[m]||0));sc+=cnt[c];st+=totv(mv);});
+    const sr=[{v:'小計',s:S.tlbl},{v:gLabel[g],s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{v:st,t:'n',s:S.tyen},{s:S.tlbl}];
+    FM.forEach(m=>{sr.push({v:sm[m]||0,t:'n',s:S.tyen});gm[m]=(gm[m]||0)+(sm[m]||0);});sr.push({v:st,t:'n',s:S.tyen});sr.push({v:sc,t:'n',s:S.tyen});rows.push(sr);grand+=st;gcnt+=sc;}
+  const gr=[{v:'合計',s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{s:S.tlbl},{v:grand,t:'n',s:S.tyen},{s:S.tlbl}];
+  FM.forEach(m=>gr.push({v:gm[m]||0,t:'n',s:S.tyen}));gr.push({v:grand,t:'n',s:S.tyen});gr.push({v:gcnt,t:'n',s:S.tyen});rows.push(gr);
+  const cols=[9,20,12,10,12,10,8,14,10].concat(MONTHS2.map(()=>9)).concat([13,7]);
+  const sheet1={name:(AXIS==='staff'?'担当者別集計':'相手先別集計'),cols:cols,rows:rows};
+  const H2=['月','相手先','按分金額','伝票金額','支払先','摘要','区分','確認済'];
+  const r2=[H2.map(x=>({v:x,s:S.hdr}))];
+  const kl={company:klOf('company'),bucket:klOf('bucket'),none:klOf('none'),edited:'編集済み',learned:'自動修正'};
+  TX.slice().sort(cmpFiscal).forEach(t=>{const cs=t.c.length?t.c:[NONE];const n=cs.length;const base=Math.floor(t.amt/n);let rem=t.amt-base*n;
+    cs.forEach((c,i)=>{r2.push([{v:t.m?t.m+'月':'',s:S.txt},{v:c,s:S.txt},{v:base+(i===0?rem:0),t:'n',s:S.yen},{v:t.amt,t:'n',s:S.yen},{v:t.v,s:S.txt},{v:t.t,s:S.txt},{v:kl[kindOf(t)]||'',s:S.txt},{v:t.done?'✓':'',s:S.txt}]);});});
+  const sheet2={name:'明細',cols:[7,20,12,12,20,50,10,7],rows:r2};
+  if(!TX.length){alert('データがありません。先にtxtを取り込んでください。');return;}
+  const bytes=buildXlsx([sheet1,sheet2]);
+  const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const uu=URL.createObjectURL(blob);const a=document.createElement('a');a.href=uu;a.download='接待交際費_'+(AXIS==='staff'?'担当者別':'相手先別')+'集計.xlsx';a.click();URL.revokeObjectURL(uu);
+}
+
+// ---- init ----
+loadCorr();loadCands();SCANDS=SCANDS.filter(x=>x!=='営業');refreshCands();
+loadPeriods();renderPeriodSel();
+const _loaded=autoload();
+if(!_loaded){TX=txFromEmbedded();DSNAME='サンプルデータ';}   // 初回は架空サンプルで即プレビュー
+render();updateAutoStat();
+if(_loaded){const el=document.getElementById('autostat');if(el){el.innerHTML='✓ 前回の続きを読み込みました';setTimeout(updateAutoStat,2500);}}
+document.getElementById('syncstat').textContent='';
+</script>
+</body>
+</html>
