@@ -1,1 +1,2060 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人員配置表</title>
+<style>
+:root {
+  --bg:           #f4f3ef;
+  --surface:      #ffffff;
+  --surface2:     #efede8;
+  --border:       rgba(0,0,0,.09);
+  --border-hard:  rgba(0,0,0,.20);
+  --text:         #1c1c1a;
+  --text-sub:     #767670;
+  --text-hint:    #b2b2a8;
+  --red:          #c93535;
+  --red-lt:       #fbeaea;
+  --red-dk:       #8a2020;
+  --green:        #1c8050;
+  --green-lt:     #e8f5ee;
+  --green-dk:     #10522f;
+  --blue:         #2055a0;
+  --blue-lt:      #e8eef8;
+  --blue-dk:      #133070;
+  --today:        rgba(210,50,50,.45);
+  --r:            7px;
+  --r-lg:         11px;
+  --header-h:     50px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+}
+#loading {
+  position: fixed; inset: 0; background: rgba(255,255,255,.65);
+  display: none; align-items: center; justify-content: center; z-index: 500;
+}
+.spinner {
+  width: 30px; height: 30px;
+  border: 3px solid var(--border-hard);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#toast {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1a; color: #fff;
+  padding: 9px 18px; border-radius: var(--r-lg);
+  font-size: 12px; z-index: 600;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+  white-space: nowrap;
+}
+#toast.show  { opacity: 1; }
+#toast.error { background: var(--red); }
+#pw-screen {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 400;
+}
+.pw-box {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 28px 24px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.pw-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.pw-box p  { font-size: 12px; color: var(--text-sub); margin-bottom: 16px; }
+.pw-box input {
+  width: 100%; padding: 8px 12px;
+  border: 1px solid var(--border-hard);
+  border-radius: var(--r);
+  font-size: 14px; font-family: inherit;
+  text-align: center; letter-spacing: .12em;
+  outline: none; margin-bottom: 10px;
+}
+.pw-box input:focus { border-color: var(--blue); }
+.pw-error { font-size: 11px; color: var(--red); margin-top: 4px; }
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: var(--header-h);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 0;
+  position: sticky; top: 0; z-index: 100;
+}
+.app-title {
+  font-size: 14px; font-weight: 800; letter-spacing: .05em;
+  padding-right: 18px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tabs {
+  display: flex; overflow-x: auto;
+  scrollbar-width: none;
+  margin-left: 4px; flex: 1;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  height: var(--header-h);
+  padding: 0 14px;
+  border: none; background: none;
+  color: var(--text-sub);
+  font-size: 12px; font-weight: 500; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .12s, border-color .12s;
+  flex-shrink: 0;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
+.tab.admin-only::after { content: ' 🔒'; font-size: 9px; }
+.tab.admin-only.unlocked::after { content: ' 🔓'; }
+.header-right {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  padding-left: 12px; flex-shrink: 0;
+}
+.mode-pill {
+  font-size: 10px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; white-space: nowrap;
+}
+.mode-pill.admin  { background: var(--text); color: #fff; }
+.mode-pill.viewer { background: var(--blue); color: #fff; }
+.page { display: none; padding: 16px 20px; }
+.page.active { display: block; }
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-hard);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px; font-weight: 500; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  transition: background .1s;
+}
+.btn:hover { background: var(--surface2); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: var(--blue); color: #fff; border-color: transparent; }
+.btn-primary:hover:not(:disabled) { background: var(--blue-dk); }
+.btn-success { background: var(--green); color: #fff; border-color: transparent; }
+.btn-success:hover { background: var(--green-dk); }
+.btn-danger  { background: transparent; color: var(--red); border-color: var(--red); }
+.btn-danger:hover { background: var(--red-lt); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.form-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.form-row label {
+  font-size: 10px; font-weight: 700; color: var(--text-sub);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.form-row input,
+.form-row select,
+.form-row textarea {
+  padding: 7px 10px;
+  border: 1px solid var(--border-hard);
+  border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color .12s;
+}
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus { border-color: var(--blue); }
+.form-row textarea { resize: vertical; min-height: 64px; }
+.toolbar {
+  display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.toolbar label { font-size: 11px; color: var(--text-sub); }
+/* 表示切替トグル（担当者別/工事別） */
+.view-toggle {
+  display: inline-flex; border: 1px solid var(--border-hard);
+  border-radius: var(--r); overflow: hidden;
+}
+.view-btn {
+  border: none; background: var(--surface); color: var(--text-sub);
+  font-size: 12px; font-family: inherit; font-weight: 600;
+  padding: 6px 14px; cursor: pointer;
+}
+.view-btn + .view-btn { border-left: 1px solid var(--border-hard); }
+.view-btn.active { background: var(--blue); color: #fff; }
+.view-btn:not(.active):hover { background: var(--surface2); }
+.toolbar select {
+  padding: 5px 10px;
+  border: 1px solid var(--border-hard);
+  border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  font-size: 12px; font-family: inherit; outline: none;
+}
+.legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  align-items: center; margin-bottom: 10px;
+}
+.leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-sub); }
+.leg-bar { width: 20px; height: 8px; border-radius: 4px; flex-shrink: 0; }
+.leg-bar-sm { width: 10px; height: 8px; border-radius: 4px; flex-shrink: 0; }
+.leg-dashed { width: 22px; height: 0; border-top: 2px dashed var(--border-hard); }
+.leg-gap { width: 22px; height: 0; border-top: 1.5px dotted #999; }
+/* 凡例の見本 */
+.leg-spot {
+  width: 20px; height: 10px; border-radius: 5px;
+  border: 1.5px dashed rgba(255,255,255,.9); background: #767670; flex-shrink: 0;
+}
+.leg-plan {
+  width: 20px; height: 10px; border-radius: 5px;
+  border: 1.5px dashed #767670; background: transparent; flex-shrink: 0;
+}
+.leg-ext {
+  width: 20px; height: 10px; border-radius: 5px;
+  border: 1.5px solid #767670; flex-shrink: 0; overflow: hidden;
+  background: repeating-linear-gradient(45deg, rgba(118,118,112,.35) 0 2px, transparent 2px 5px), #e8e8e2;
+}
+.gantt-wrap {
+  overflow-x: auto;
+  max-height: calc(100vh - var(--header-h) - 130px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+table.gantt { border-collapse: collapse; min-width: 900px; width: 100%; }
+table.gantt th,
+table.gantt td { font-size: 12px; white-space: nowrap; }
+table.gantt thead th {
+  background: var(--surface2);
+  padding: 7px 8px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-sub);
+  position: sticky; top: 0; z-index: 20;
+}
+table.gantt thead th.col-name {
+  text-align: left; min-width: 80px;
+  position: sticky; left: 0; z-index: 25;
+  background: var(--surface2);
+}
+table.gantt thead th.col-job { text-align: left; min-width: 140px; }
+table.gantt tbody tr:hover td { background: #fafaf6; }
+table.gantt tbody td {
+  padding: 0; height: 52px;
+  border-bottom: 1px solid var(--border);
+}
+table.gantt tbody td.col-name {
+  padding: 5px 10px;
+  font-weight: 700; font-size: 13px; text-align: center;
+  border-right: 2px solid var(--border-hard);
+  position: sticky; left: 0; background: var(--surface); z-index: 6;
+}
+table.gantt tbody td.col-job {
+  padding: 3px 10px;
+  font-size: 11px; color: var(--text);
+  vertical-align: middle;
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+}
+table.gantt tbody td.col-job:hover { background: #fffbe0; }
 
+/* 進捗列 */
+table.gantt thead th.col-prog { min-width: 54px; width: 54px; }
+table.gantt tbody td.col-prog {
+  border-right: 2px solid var(--border-hard);
+  padding: 4px 6px; text-align: center; vertical-align: middle;
+  cursor: pointer;
+}
+table.gantt tbody td.col-prog:hover { background: #fffbe0; }
+.prog-num { font-size: 13px; font-weight: 700; line-height: 1.1; }
+.prog-gauge {
+  height: 4px; border-radius: 2px; background: rgba(0,0,0,.10);
+  overflow: hidden; margin-top: 4px;
+}
+.prog-gauge-fill { height: 100%; border-radius: 2px; }
+table.gantt tbody td.sep { border-bottom: 2px solid var(--border-hard); }
+.add-koji-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 6px;
+  width: 20px; height: 20px;
+  border: 1px solid var(--blue);
+  border-radius: 50%;
+  background: var(--surface); color: var(--blue);
+  font-size: 13px; font-weight: 700; line-height: 1;
+  cursor: pointer; padding: 0;
+  vertical-align: middle;
+  transition: background .12s;
+}
+.add-koji-btn:hover { background: var(--blue-lt); }
+td.month-cell {
+  position: relative; vertical-align: middle;
+  min-width: 82px;
+  border-left: 1px solid var(--border);
+}
+/* コメントを描くセルだけ前面へ。月をまたいだ文字が隣セルに隠れないようにする */
+td.month-cell.has-comment { z-index: 5; }
+.bar-wrap { position: relative; height: 52px; }
+
+/* 工期＝薄い帯 / 進捗＝濃い塗り */
+.bar-track {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 18px; overflow: hidden;
+  cursor: pointer; z-index: 2;
+  transition: box-shadow .12s;
+}
+.bar-track:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.18); }
+/* スポット：中を薄く塗る＋破線枠。細くても見えるよう最小幅を保証 */
+.bar-spot {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 18px; border: 1.5px dashed;
+  cursor: pointer; z-index: 2;
+}
+.bar-spot:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.15); }
+
+/* 予定：破線枠のみ（まだ確定していないことを示す） */
+.bar-plan {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 18px; border: 1.5px dashed; background: transparent;
+  cursor: pointer; z-index: 2;
+}
+.bar-plan:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.15); }
+
+/* 延長：ハッチング（斜線）＋実線枠。本来の工期の外であることを示す */
+.bar-ext {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 18px; border: 1.5px solid; border-left: none;
+  overflow: hidden;
+  cursor: pointer; z-index: 2;
+}
+.bar-ext:hover { box-shadow: 0 0 0 2px rgba(0,0,0,.15); }
+.bar-ext-hatch { position: absolute; inset: 0; opacity: .28; }
+/* 中断期間（第1期間の終わり〜再開日）をつなぐ点線 */
+.gap-line {
+  position: absolute; top: 50%; height: 0;
+  border-top: 1.5px dotted #aaa;
+  pointer-events: none; z-index: 1;
+}
+.gap-label {
+  position: absolute; top: 8px;
+  font-size: 9px; color: #999;
+  pointer-events: none; white-space: nowrap;
+}
+.bar-end-date {
+  position: absolute; top: 76%;
+  font-size: 10px; font-weight: 600;
+  white-space: nowrap; pointer-events: none;
+  padding-left: 3px;
+}
+.bar-comment {
+  position: absolute; top: 1px;
+  font-size: 11px; color: #111; font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap; pointer-events: none;
+  z-index: 6;
+}
+
+/* ===== バー押下で開く入力パネル ===== */
+.pop-backdrop { position: fixed; inset: 0; z-index: 200; display: none; }
+.pop-backdrop.open { display: block; }
+.popover {
+  position: absolute; z-index: 210; width: 268px; max-width: 94vw;
+  background: var(--surface); border: 1px solid var(--border-hard);
+  border-radius: var(--r-lg); box-shadow: 0 8px 30px rgba(0,0,0,.20);
+  padding: 15px; display: none;
+}
+.popover.open { display: block; }
+.pop-arrow {
+  position: absolute; top: -7px; left: 26px; width: 12px; height: 12px;
+  background: var(--surface); border-left: 1px solid var(--border-hard);
+  border-top: 1px solid var(--border-hard); transform: rotate(45deg);
+}
+.pop-head { margin-bottom: 11px; }
+.pop-title { font-size: 13px; font-weight: 700; line-height: 1.35; }
+.pop-sub { font-size: 10px; color: var(--text-sub); margin-top: 3px; }
+.pop-tabs {
+  display: flex; gap: 2px; margin-bottom: 13px;
+  background: var(--surface2); border-radius: 8px; padding: 3px;
+}
+.pop-tab {
+  flex: 1; padding: 7px 4px; border: none; background: transparent;
+  font-size: 12px; font-family: inherit; color: var(--text-sub);
+  border-radius: 6px; cursor: pointer; font-weight: 500;
+  transition: background .12s, color .12s;
+}
+.pop-tab:hover { color: var(--text); }
+.pop-tab.active {
+  background: var(--surface); color: var(--text); font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,.10);
+}
+/* 管理者はタブ順を入れ替え、工事編集を先頭に */
+body.is-admin #tab-term { order: -1; }
+.pop-panel { display: none; }
+.pop-panel.active { display: block; }
+.step-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.step-btn {
+  width: 38px; height: 38px; border-radius: 9px;
+  border: 1px solid var(--border-hard); background: var(--surface2);
+  font-size: 19px; color: var(--text); cursor: pointer; line-height: 1;
+  font-family: inherit;
+}
+.step-btn:hover { background: #e3e1db; }
+.step-mid { flex: 1; }
+.step-val { text-align: center; font-size: 22px; font-weight: 700; line-height: 1; }
+.step-range { width: 100%; margin-top: 8px; accent-color: var(--blue); }
+.pop-label {
+  font-size: 10px; font-weight: 700; color: var(--text-sub);
+  letter-spacing: .05em; margin-bottom: 5px;
+}
+.pop-comment {
+  width: 100%; border: 1px solid var(--border-hard); border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; font-family: inherit; line-height: 1.5;
+  min-height: 56px; resize: vertical; outline: none;
+  background: var(--surface2); color: var(--text);
+}
+.pop-comment:focus { border-color: var(--blue); }
+.f-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+.f-row label {
+  font-size: 10px; font-weight: 700; color: var(--text-sub); letter-spacing: .05em;
+}
+.f-row input, .f-row select {
+  padding: 7px 9px; border: 1px solid var(--border-hard); border-radius: 7px;
+  font-size: 12px; font-family: inherit; background: var(--surface); color: var(--text);
+  outline: none;
+}
+.f-row input:focus, .f-row select:focus { border-color: var(--blue); }
+/* 管理者だけに見せる項目 */
+.admin-only-field { display: none; }
+body.is-admin .admin-only-field { display: flex; }
+
+/* 第2期間セクション */
+.p2-section { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 11px; }
+.p2-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.p2-title { font-size: 10px; font-weight: 700; color: var(--text-sub); letter-spacing: .05em; }
+.p2-toggle {
+  font-size: 11px; color: var(--blue); background: none; border: none;
+  cursor: pointer; font-family: inherit; padding: 0;
+}
+.p2-toggle:hover { text-decoration: underline; }
+.p2-body { display: none; }
+.p2-body.open { display: block; }
+.p2-hint { font-size: 10px; color: var(--text-sub); line-height: 1.6; margin-bottom: 8px; }
+/* 可変の期間リスト行（縦積みカード） */
+.period-row {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px 4px;
+  margin-bottom: 8px;
+  background: var(--surface2);
+}
+.period-row .f-row { margin-bottom: 8px; }
+.period-row .p-label {
+  font-size: 10px; font-weight: 700; color: var(--text-sub);
+  letter-spacing: .05em; margin-bottom: 4px;
+}
+.period-del {
+  position: absolute; top: 7px; right: 8px;
+  border: 1px solid var(--red); color: var(--red); background: var(--surface);
+  border-radius: 6px; padding: 1px 7px; cursor: pointer; font-size: 11px;
+  line-height: 1.4;
+}
+.period-del:hover { background: var(--red-lt); }
+.pop-footer { display: flex; gap: 8px; margin-top: 13px; }
+.pop-footer button {
+  padding: 9px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  font-family: inherit; border: 1px solid var(--border-hard);
+}
+.btn-close { flex: 1; background: var(--surface2); color: var(--text-sub); }
+.btn-save  { flex: 2; background: var(--blue); color: #fff; border-color: transparent; font-weight: 700; }
+.btn-save:hover { background: var(--blue-dk); }
+.btn-del {
+  padding: 9px 12px; background: transparent; color: var(--red);
+  border-color: var(--red); display: none;
+}
+body.is-admin .btn-del { display: block; }
+.btn-del:hover { background: var(--red-lt); }
+
+.master-row { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.master-row input {
+  padding: 6px 12px;
+  border: 1px solid var(--border-hard);
+  border-radius: var(--r);
+  font-size: 13px; font-family: inherit;
+  background: var(--surface); color: var(--text);
+  width: 220px; outline: none;
+}
+.master-row input:focus { border-color: var(--blue); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-hard);
+  border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  background: var(--surface);
+}
+.chip-del {
+  border: none; background: none; cursor: pointer;
+  font-size: 14px; color: var(--text-hint);
+  padding: 0; line-height: 1; transition: color .12s;
+}
+.chip-del:hover { color: var(--red); }
+.master-note { font-size: 11px; color: var(--text-hint); margin-top: 14px; }
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.30);
+  display: none; align-items: center; justify-content: center; z-index: 300;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px; width: 360px;
+  max-width: 95vw; max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+}
+.modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.modal-footer {
+  display: flex; justify-content: space-between;
+  align-items: center; gap: 8px; margin-top: 16px;
+}
+.modal-footer-right { display: flex; gap: 8px; }
+.settings-section {
+  max-width: 520px;
+  padding-bottom: 20px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-section:last-child { border-bottom: none; }
+.settings-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.empty {
+  text-align: center; padding: 36px 20px;
+  font-size: 13px; color: var(--text-sub);
+}
+#print-header {
+  justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--text);
+}
+.print-title { font-size: 17px; font-weight: 800; letter-spacing: .05em; }
+.print-date  { font-size: 11px; color: var(--text-sub); }
+
+/* 印刷フィット計測用（印刷ボタン押下時にJSが付与） */
+.print-mode .bar-wrap { height: 56px; }
+.print-mode table.gantt thead th { font-size: 13px; padding: 5px 4px; }
+.print-mode table.gantt td.col-name { font-size: 14px; white-space: nowrap; }
+.print-mode table.gantt td.col-job {
+  width: 150px; max-width: 150px; white-space: normal; line-height: 1.25; font-size: 14px;
+}
+.print-legend { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 8mm; }
+  html, body { background: #fff !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  .app-header, .toolbar, .legend,
+  #toast, #loading, #pw-screen, .modal-bg,
+  .pop-backdrop, .popover,
+  .add-koji-btn { display: none !important; }
+
+  .page { display: none !important; padding: 0 !important; }
+  #page-gantt { display: block !important; }
+  #print-header { display: flex !important; }
+  .print-legend { display: flex !important; font-size: 11px; margin: 2px 0 8px; }
+
+  .gantt-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+  table.gantt { min-width: 0 !important; width: 100% !important; border: 1.5px solid #777 !important; }
+  table.gantt thead { display: table-header-group; }
+  table.gantt tr { page-break-inside: avoid; }
+  table.gantt tbody td { border-bottom: none !important; }
+  table.gantt tbody td.sep { border-bottom: 2px solid #555 !important; }
+  table.gantt thead th,
+  table.gantt thead th.col-name,
+  table.gantt tbody td.col-name { position: static !important; }
+  td.month-cell { min-width: 0 !important; width: auto !important; }
+
+  .bar-wrap { height: 56px !important; }
+  .bar-track, .bar-spot, .bar-plan, .bar-ext {
+    height: 12px !important;
+    top: 50% !important; transform: translateY(-50%) !important;
+  }
+  .gap-line { top: 50% !important; border-top-color: #888 !important; }
+  .gap-label { top: 4px !important; font-size: 10px !important; color: #666 !important; }
+  .bar-end-date {
+    top: 80% !important; bottom: auto !important;
+    transform: translateY(-50%) !important;
+    padding-left: 4px !important;
+    color: #111 !important; font-size: 12px !important; font-weight: 700 !important;
+    opacity: 1 !important;
+  }
+  /* 進捗列は印刷でも細く維持 */
+  table.gantt th.col-prog, table.gantt td.col-prog {
+    width: 46px !important; min-width: 46px !important;
+  }
+  .prog-num { font-size: 12px !important; }
+  .bar-comment {
+    top: 7px !important; font-size: 12px !important;
+    color: #111 !important; font-weight: 700 !important;
+    line-height: 1.3 !important;
+    overflow: visible !important; text-overflow: clip !important;
+  }
+  table.gantt th.col-name, table.gantt td.col-name {
+    min-width: 0 !important; width: 1% !important; white-space: nowrap !important;
+    font-size: 14px !important; color: var(--text) !important; font-weight: 700 !important;
+    padding-left: 5px !important; padding-right: 5px !important;
+  }
+  table.gantt th.col-job, table.gantt td.col-job {
+    width: 150px !important; min-width: 0 !important; max-width: 150px !important;
+    white-space: normal !important; line-height: 1.25 !important; font-size: 14px !important;
+    color: var(--text) !important; font-weight: 400 !important;
+    padding-left: 5px !important; padding-right: 5px !important;
+  }
+  table.gantt thead th {
+    font-size: 13px !important; padding: 5px 4px !important;
+    color: var(--text) !important; font-weight: 700 !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="loading" style="display:none">
+  <div class="spinner"></div>
+</div>
+
+<div id="toast"></div>
+
+<div id="pw-screen">
+  <div class="pw-box">
+    <h3>🔒 管理者ログイン</h3>
+    <p>管理者パスワードを入力してください<br>
+      <span style="color:var(--blue);font-weight:700">デモ用パスワード: 0000</span></p>
+    <input type="password" id="pw-input" placeholder="パスワード"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn btn-primary" style="width:100%" onclick="checkPw()">ログイン</button>
+    <div class="pw-error" id="pw-error"></div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="cancelPw()">キャンセル</button>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="app-title">人員配置表</div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active"     data-tab="gantt"       onclick="switchTab('gantt')">ガントチャート</button>
+    <button class="tab"            data-tab="progress"    onclick="switchTab('progress')">進捗一覧</button>
+    <button class="tab admin-only" data-tab="master"      onclick="requireAdmin('master')">担当者マスタ</button>
+    <button class="tab admin-only" data-tab="koji-master" onclick="requireAdmin('koji-master')">工事マスタ</button>
+    <button class="tab admin-only" data-tab="settings"    onclick="requireAdmin('settings')">設定</button>
+  </nav>
+  <div class="header-right">
+    <span class="mode-pill" style="background:#fef3c7;color:#92400e">🎪 どぼフェス体験版</span>
+    <span class="mode-pill viewer" id="mode-pill">監督モード</span>
+    <button class="btn btn-sm" id="mode-btn" onclick="toggleAdmin()">管理者ログイン</button>
+  </div>
+</header>
+
+<div id="page-gantt" class="page active">
+  <div class="toolbar">
+    <div class="view-toggle">
+      <button type="button" class="view-btn active" id="view-person" onclick="setView('person')">担当者別</button>
+      <button type="button" class="view-btn" id="view-koji" onclick="setView('koji')">工事別</button>
+    </div>
+    <label>表示期間</label>
+    <select id="sel-range" onchange="renderGantt()">
+      <option value="3">3ヶ月</option>
+      <option value="6" selected>6ヶ月</option>
+      <option value="12">1年</option>
+      <option value="24">2年</option>
+    </select>
+    <label>担当者</label>
+    <select id="sel-person" onchange="renderGantt()">
+      <option value="">全員</option>
+    </select>
+    <button class="btn btn-success" onclick="printGantt()">PDF / 印刷</button>
+    <button class="btn" onclick="loadData()" title="最新データを取得">↻ 更新</button>
+    <button class="btn" onclick="resetDemo()" title="サンプルデータに戻す" style="margin-left:auto">🔄 デモをリセット</button>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="leg-bar" style="background:#c93535"></div>元請</div>
+    <div class="leg"><div class="leg-bar" style="background:#1c8050"></div>民間</div>
+    <div class="leg"><div class="leg-bar" style="background:#2055a0"></div>予定</div>
+    <div class="leg">
+      <div class="leg-bar" style="background:#f7e3e3"></div>薄=工期 /
+      <div class="leg-bar-sm" style="background:#c93535"></div>濃=進捗
+    </div>
+    <div class="leg"><div class="leg-spot"></div>スポット</div>
+    <div class="leg"><div class="leg-ext"></div>延長</div>
+    <div class="leg"><div class="leg-plan"></div>予定</div>
+    <div class="leg"><div class="leg-gap"></div>中断（参加なし）</div>
+  </div>
+  <div id="print-area">
+    <div id="print-scale">
+      <div id="print-header" style="display:none">
+        <span class="print-title">人員配置表</span>
+        <span class="print-date" id="print-date"></span>
+      </div>
+      <div class="legend print-legend">
+        <div class="leg"><div class="leg-bar" style="background:#c93535"></div>元請</div>
+        <div class="leg"><div class="leg-bar" style="background:#1c8050"></div>民間</div>
+        <div class="leg"><div class="leg-bar" style="background:#2055a0"></div>予定</div>
+        <div class="leg"><div class="leg-spot"></div>スポット</div>
+        <div class="leg"><div class="leg-ext"></div>延長</div>
+        <div class="leg"><div class="leg-plan"></div>予定</div>
+        <div class="leg"><div class="leg-gap"></div>中断</div>
+      </div>
+      <div class="gantt-wrap">
+        <div id="gantt-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-progress" class="page">
+  <div class="toolbar">
+    <label>担当者</label>
+    <select id="sel-prog-person" onchange="renderProgressOnly()">
+      <option value="">全員</option>
+    </select>
+  </div>
+  <div id="progress-only-list"></div>
+</div>
+
+<div id="page-master" class="page">
+  <div class="master-row">
+    <input id="inp-person" placeholder="担当者名を入力…"
+      onkeydown="if(event.key==='Enter')addPerson()">
+    <button class="btn btn-primary" onclick="addPerson()">追加</button>
+  </div>
+  <div class="chips" id="person-chips"></div>
+  <p class="master-note">※ 担当者を削除しても工事データは残ります。</p>
+</div>
+
+<div id="page-koji-master" class="page">
+  <div class="master-row">
+    <input id="inp-koji" placeholder="工事名を入力…"
+      onkeydown="if(event.key==='Enter')addKoji()">
+    <button class="btn btn-primary" onclick="addKoji()">追加</button>
+  </div>
+  <div class="chips" id="koji-chips"></div>
+  <p class="master-note">※ 工事マスタを削除しても既存の工事データは残ります。</p>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="settings-section">
+    <h3>このデモについて</h3>
+    <p style="font-size:12px;color:var(--text-sub);line-height:1.8">
+      これは展示・体験用のデモです。入力・変更したデータは、お使いのブラウザの中だけに保存されます。<br>
+      サーバーには送信されず、他の人には共有されません。表示中のデータはすべて架空のサンプルです。
+    </p>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="resetDemo()">🔄 サンプルデータに戻す</button>
+  </div>
+
+  <div class="settings-section">
+    <h3>御社向けの導入について</h3>
+    <p style="font-size:12px;color:var(--text-sub);line-height:1.8">
+      製品版では、複数の端末でデータを共有（クラウド同期）できます。<br>
+      御社の工事・担当者に合わせてカスタマイズ可能です。<br>
+      どぼフェス ブース、または <b>mb-dx@marubeni-co.jp</b> までお気軽にご相談ください。
+    </p>
+  </div>
+</div>
+
+<!-- 新規追加モーダル（管理者のみ・担当者行の＋から） -->
+<div id="modal-add" class="modal-bg" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <h3>工事追加</h3>
+    <div class="form-row">
+      <label>担当者</label>
+      <select id="a-person"><option value="">— 選択してください —</option></select>
+    </div>
+    <div class="form-row">
+      <label>工事名</label>
+      <select id="a-name"><option value="">— 選択してください —</option></select>
+    </div>
+    <div class="form-row">
+      <label>工事種別</label>
+      <select id="a-type">
+        <option value="元請">元請</option>
+        <option value="民間">民間</option>
+        <option value="予定">予定</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>配置</label>
+      <select id="a-config">
+        <option value="常駐">常駐</option>
+        <option value="スポット">スポット</option>
+      </select>
+    </div>
+    <div class="form-row"><label>開始日</label><input type="date" id="a-start"></div>
+    <div class="form-row"><label>終了日</label><input type="date" id="a-end"></div>
+    <div class="form-row"><label>延長日（任意）</label><input type="date" id="a-ext"></div>
+    <div class="p2-section">
+      <div class="p2-head">
+        <span class="p2-title">中断期間（任意）</span>
+        <button class="p2-toggle" id="a-period-add" onclick="addPeriodRow('a')">＋ 中断を追加</button>
+      </div>
+      <div class="p2-hint">工期の中で一時的に参加しない期間を追加します。何回でも足せます。</div>
+      <div id="a-period-list"></div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div class="modal-footer-right">
+        <button class="btn" onclick="closeAddModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveAdd()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- バー押下で開くパネル -->
+<div class="pop-backdrop" id="backdrop" onclick="closePop()"></div>
+<div class="popover" id="popover" onclick="event.stopPropagation()">
+  <div class="pop-arrow"></div>
+
+  <div class="pop-head">
+    <div class="pop-title" id="pop-title"></div>
+    <div class="pop-sub" id="pop-sub"></div>
+  </div>
+
+  <div class="pop-tabs">
+    <button class="pop-tab active" id="tab-prog" onclick="switchPopTab('prog')">進捗・コメント</button>
+    <button class="pop-tab"        id="tab-term" onclick="switchPopTab('term')">工期変更</button>
+  </div>
+
+  <div class="pop-panel active" id="panel-prog">
+    <div class="step-row">
+      <button class="step-btn" onclick="stepProg(-5)">−</button>
+      <div class="step-mid">
+        <div class="step-val" id="pop-val">0%</div>
+        <input type="range" class="step-range" id="pop-range" min="0" max="100" step="5"
+          oninput="syncVal(this.value)">
+      </div>
+      <button class="step-btn" onclick="stepProg(5)">＋</button>
+    </div>
+    <div class="pop-label">コメント（現場メモ）</div>
+    <textarea class="pop-comment" id="pop-comment" placeholder="例: 橋脚完了、上部工に着手"></textarea>
+    <div class="pop-footer">
+      <button class="btn-close" onclick="closePop()">閉じる</button>
+      <button class="btn-save" onclick="saveProgPop()">保存</button>
+    </div>
+  </div>
+
+  <div class="pop-panel" id="panel-term">
+    <div class="f-row admin-only-field">
+      <label>担当者</label>
+      <select id="f-person"></select>
+    </div>
+    <div class="f-row admin-only-field">
+      <label>工事名</label>
+      <select id="f-name"></select>
+    </div>
+    <div class="f-row admin-only-field">
+      <label>工事種別</label>
+      <select id="f-type">
+        <option value="元請">元請</option>
+        <option value="民間">民間</option>
+        <option value="予定">予定</option>
+      </select>
+    </div>
+    <div class="f-row admin-only-field">
+      <label>配置</label>
+      <select id="f-config">
+        <option value="常駐">常駐</option>
+        <option value="スポット">スポット</option>
+      </select>
+    </div>
+    <div class="f-row"><label>開始日</label><input type="date" id="f-start"></div>
+    <div class="f-row"><label>終了日</label><input type="date" id="f-end"></div>
+    <div class="f-row"><label>延長日（任意）</label><input type="date" id="f-ext"></div>
+
+    <div class="p2-section">
+      <div class="p2-head">
+        <span class="p2-title">中断期間（工期の中で参加しない期間）</span>
+        <button class="p2-toggle" id="p2-add" onclick="addPeriodRow()">＋ 中断を追加</button>
+      </div>
+      <div class="p2-hint" id="p2-hint">工期は1本のまま、その中で一時的に離れる期間を追加します。何回でも足せます。</div>
+      <div id="period-list"></div>
+    </div>
+
+    <div class="pop-footer">
+      <button class="btn-del" onclick="delKojiPop()">削除</button>
+      <button class="btn-close" onclick="closePop()">閉じる</button>
+      <button class="btn-save" onclick="saveTermPop()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* =========================================================
+   展示・体験用デモ版
+   - サーバー(GAS)接続なし。データはこのブラウザのlocalStorageのみ。
+   - 初回はサンプルデータを自動表示。「デモをリセット」でいつでも戻せる。
+   - 表示データはすべて架空。
+   ========================================================= */
+
+const COLOR = { 元請:'#c93535', 民間:'#1c8050', 予定:'#2055a0' };
+const LIGHT = { 元請:'#f7e3e3', 民間:'#e2f2ea', 予定:'#e3ebf7' };
+const TYPE_BG = { 元請:'#fbeaea', 民間:'#e8f5ee', 予定:'#e8eef8' };
+const TYPE_FG = { 元請:'#8a2020', 民間:'#10522f', 予定:'#133070' };
+// デモ用の管理者パスワード（誰でも試せるよう公開）。本番では設定画面から変更します。
+const ADMIN_PW = '0000';
+let isAdmin    = false;
+let pendingTab = null;
+let editId     = null;   // パネルで編集中の工事ID
+let currentView = 'person';   // 'person'=担当者別 / 'koji'=工事別
+
+let masters     = [];
+let kojiMasters = [];
+let kojiData    = [];
+let nextId      = 1;
+
+/* ---------- デモ用サンプルデータ（すべて架空） ---------- */
+const DEMO_MASTERS = ['山田太郎','佐藤次郎','鈴木三郎','高橋四郎','田中五郎','伊藤六郎','渡辺七郎'];
+const DEMO_KOJI_MASTERS = [
+  'A舗装工事','B道路工事','C除草工事','Dトンネル工事',
+  'E舗装工事','F改修工事','G維持工事','H建築工事',
+  'I擁壁工事','J道路工事'
+];
+const DEMO_KOJI = [
+  { id:1,  person:'山田太郎', name:'A舗装工事',      type:'民間', config:'常駐',   start:'2026-08-01', end:'2027-03-31', ext:'', breaks:[{start:'2026-10-15', end:'2026-11-30'}], progress:0,  comment:'' },
+  { id:2,  person:'山田太郎', name:'B道路工事',      type:'民間', config:'常駐',   start:'2026-10-01', end:'2026-11-30', ext:'', breaks:[], progress:0,  comment:'' },
+  { id:3,  person:'佐藤次郎', name:'C除草工事',      type:'元請', config:'スポット', start:'2026-08-04', end:'2026-08-14', ext:'', breaks:[], progress:0,  comment:'' },
+  { id:4,  person:'鈴木三郎', name:'Dトンネル工事',  type:'民間', config:'常駐',   start:'2026-09-01', end:'2027-02-28', ext:'', breaks:[{start:'2026-11-01', end:'2027-01-31'}], progress:0, comment:'後日正確な工期反映' },
+  { id:5,  person:'鈴木三郎', name:'E舗装工事',      type:'民間', config:'常駐',   start:'2026-08-24', end:'2026-09-11', ext:'', breaks:[], progress:25, comment:'8/24着工。打設1回（全4回）終了。' },
+  { id:6,  person:'高橋四郎', name:'F改修工事',      type:'民間', config:'常駐',   start:'2026-08-01', end:'2027-03-31', ext:'', breaks:[], progress:0,  comment:'' },
+  { id:7,  person:'田中五郎', name:'G維持工事',      type:'元請', config:'常駐',   start:'2026-08-01', end:'2027-03-31', ext:'', breaks:[], progress:95, comment:'' },
+  { id:8,  person:'伊藤六郎', name:'H建築工事',      type:'民間', config:'常駐',   start:'2026-08-01', end:'2026-10-30', ext:'', breaks:[], progress:0,  comment:'' },
+  { id:9,  person:'伊藤六郎', name:'I擁壁工事',      type:'元請', config:'常駐',   start:'2026-08-01', end:'2026-09-30', ext:'2026-10-31', breaks:[], progress:0, comment:'' },
+  { id:10, person:'渡辺七郎', name:'J道路工事',      type:'予定', config:'常駐',   start:'2026-08-01', end:'2026-09-30', ext:'', breaks:[], progress:0,  comment:'' }
+];
+
+/* ---------- ローカル保存（localStorage） ---------- */
+const LS_KEY = 'jinin_demo_v2';
+
+function persist() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ masters, kojiMasters, kojiData, nextId }));
+  } catch (e) { /* プライベートモード等では保存できないが、その場では動作する */ }
+}
+
+let _persistT = null;
+function persistLater() { clearTimeout(_persistT); _persistT = setTimeout(persist, 0); }
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d || !Array.isArray(d.kojiData)) return false;
+    masters     = Array.isArray(d.masters)     ? d.masters     : [...DEMO_MASTERS];
+    kojiMasters = Array.isArray(d.kojiMasters) ? d.kojiMasters : [...DEMO_KOJI_MASTERS];
+    kojiData    = normalizeKoji(d.kojiData);
+    nextId      = d.nextId || (kojiData.length ? Math.max(...kojiData.map(r => r.id)) + 1 : 1);
+    return true;
+  } catch (e) { return false; }
+}
+
+function seedDemo() {
+  masters     = [...DEMO_MASTERS];
+  kojiMasters = [...DEMO_KOJI_MASTERS];
+  kojiData    = normalizeKoji(DEMO_KOJI.map(r => ({ ...r, breaks: (r.breaks || []).map(b => ({ ...b })) })));
+  nextId      = kojiData.length ? Math.max(...kojiData.map(r => r.id)) + 1 : 1;
+  persist();
+}
+
+function resetDemo() {
+  if (!confirm('サンプルデータに戻します。この端末で加えた変更は消えます。よろしいですか？')) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) {}
+  seedDemo();
+  isAdmin = false;
+  closePop();
+  updateAdminUI();     // 内部で renderGantt を呼ぶ
+  switchTab('gantt');
+  showToast('サンプルデータに戻しました');
+}
+
+/* ---------- ユーティリティ ---------- */
+
+function fmtDate(s) {
+  if (!s) return '';
+  const str = String(s);
+  if (str.includes('T')) {
+    const d = new Date(str);
+    if (!isNaN(d)) {
+      const y  = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${da}`;
+    }
+  }
+  return str.slice(0, 10);
+}
+
+// yyyy-MM-dd の翌日を返す（中断の「終了日の翌日から再開」用）
+function addDay(dateStr) {
+  const d = parseLocal(dateStr);
+  d.setDate(d.getDate() + 1);
+  const y  = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
+// "yyyy-MM-dd" を「ローカルタイムの0時」の Date にする。
+function parseLocal(dateStr) {
+  if (dateStr instanceof Date) return dateStr;
+  const s = String(dateStr || '').slice(0, 10);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return new Date(dateStr);
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+function normalizeKoji(list) {
+  return (list || []).map(r => {
+    // breaks（中断期間＝工期の内側で参加しない期間）を配列に正規化。
+    let breaks = [];
+    const rawB = r.breaks;
+    if (Array.isArray(rawB)) {
+      breaks = rawB;
+    } else if (typeof rawB === 'string' && rawB.trim()) {
+      try { const b = JSON.parse(rawB); if (Array.isArray(b)) breaks = b; } catch (e) { breaks = []; }
+    }
+    breaks = breaks
+      .map(b => ({ start: fmtDate(b.start), end: fmtDate(b.end) }))
+      .filter(b => b.start && b.end);
+
+    let end = fmtDate(r.end);
+
+    // --- 旧データの移行（参加期間 periods / start2・end2 → 工期1本＋中断） ---
+    if (!breaks.length) {
+      let legacy = [];
+      const rawP = r.periods;
+      if (Array.isArray(rawP)) legacy = rawP;
+      else if (typeof rawP === 'string' && rawP.trim()) {
+        try { const p = JSON.parse(rawP); if (Array.isArray(p)) legacy = p; } catch (e) { legacy = []; }
+      }
+      legacy = legacy.map(p => ({ start: fmtDate(p.start), end: fmtDate(p.end) })).filter(p => p.start && p.end);
+      if (!legacy.length && r.start2 && r.end2) {
+        legacy = [{ start: fmtDate(r.start2), end: fmtDate(r.end2) }];
+      }
+      if (legacy.length) {
+        const seg1End = (r.ext && r.ext > r.end) ? fmtDate(r.ext) : fmtDate(r.end);
+        breaks.push({ start: seg1End, end: legacy[0].start });
+        for (let i = 0; i < legacy.length - 1; i++) {
+          breaks.push({ start: legacy[i].end, end: legacy[i + 1].start });
+        }
+        end = legacy[legacy.length - 1].end;
+      }
+    }
+
+    return {
+      ...r,
+      start:  fmtDate(r.start),
+      end:    end,
+      ext:    fmtDate(r.ext),
+      breaks,
+      progress: Number(r.progress) || 0,
+    };
+  });
+}
+
+// 中断期間を持つか
+function hasBreaks(r) { return Array.isArray(r.breaks) && r.breaks.length > 0; }
+
+function finalEndStrOf(r) {
+  return (r.ext && r.ext > r.end) ? r.ext : r.end;
+}
+
+function segmentsOf(r) {
+  const bks = (r.breaks || [])
+    .slice()
+    .sort((a, b) => (a.start < b.start ? -1 : 1));
+  const segs = [];
+  let cur = r.start;
+  bks.forEach(b => {
+    if (b.start > cur) segs.push({ start: cur, end: b.start });
+    const resume = addDay(b.end);
+    if (resume > cur) cur = resume;
+  });
+  if (r.end > cur) segs.push({ start: cur, end: r.end });
+  if (!segs.length) segs.push({ start: r.start, end: r.end });
+  return segs;
+}
+
+function gapsOf(r) {
+  return (r.breaks || []).map(b => ({ start: b.start, end: addDay(b.end) }));
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function ymd(d) {
+  const y  = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2,'0');
+  const da = String(d.getDate()).padStart(2,'0');
+  return `${y}-${mo}-${da}`;
+}
+
+/* ---------- 通信（デモ版：ローカル完結） ---------- */
+// 本番ではここがサーバー(GAS)との通信。デモ版はローカル保存のみ行う。
+
+async function gasGet() {
+  return { masters, kojiMasters, koji: kojiData };
+}
+
+async function gasPost() {
+  persistLater();     // 呼び出し元がローカル配列を更新した直後の状態を保存
+  return { ok: true };
+}
+
+async function loadData() {
+  showLoading(true);
+  try {
+    if (!loadLocal()) seedDemo();
+    renderGantt();
+  } catch (e) {
+    seedDemo();
+    renderGantt();
+  } finally {
+    showLoading(false);
+  }
+}
+
+/* ---------- 画面共通 ---------- */
+
+function showLoading(v) {
+  document.getElementById('loading').style.display = v ? 'flex' : 'none';
+}
+
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  updateAdminUI();
+  loadData();
+  document.querySelector('.gantt-wrap')
+    .addEventListener('wheel', e => e.stopPropagation(), { passive: true });
+});
+
+/* ---------- 権限 ---------- */
+
+function updateAdminUI() {
+  const pill    = document.getElementById('mode-pill');
+  const modeBtn = document.getElementById('mode-btn');
+  document.body.classList.toggle('is-admin', isAdmin);
+  document.querySelectorAll('.tab.admin-only').forEach(t => {
+    t.classList.toggle('unlocked', isAdmin);
+  });
+  if (isAdmin) {
+    pill.textContent = '管理者モード';
+    pill.className   = 'mode-pill admin';
+    modeBtn.textContent = 'ログアウト';
+  } else {
+    pill.textContent = '監督モード';
+    pill.className   = 'mode-pill viewer';
+    modeBtn.textContent = '管理者ログイン';
+  }
+  renderGantt();
+}
+
+function toggleAdmin() {
+  if (isAdmin) {
+    isAdmin = false;
+    closePop();
+    updateAdminUI();
+    switchTab('gantt');
+    showToast('ログアウトしました');
+  } else {
+    pendingTab = null;
+    showPwScreen();
+  }
+}
+
+function requireAdmin(tab) {
+  if (isAdmin) { switchTab(tab); return; }
+  pendingTab = tab;
+  showPwScreen();
+}
+
+function showPwScreen() {
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = '';
+  document.getElementById('pw-screen').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 80);
+}
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === ADMIN_PW) {
+    document.getElementById('pw-screen').style.display = 'none';
+    isAdmin = true;
+    updateAdminUI();
+    if (pendingTab) { switchTab(pendingTab); pendingTab = null; }
+    showToast('管理者としてログインしました');
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function cancelPw() {
+  document.getElementById('pw-screen').style.display = 'none';
+  pendingTab = null;
+}
+
+const TAB_ORDER = ['gantt','progress','master','koji-master','settings'];
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el, i) =>
+    el.classList.toggle('active', TAB_ORDER[i] === t));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + t).classList.add('active');
+
+  if (t === 'progress')    renderProgressOnly();
+  if (t === 'master')      renderPersonChips();
+  if (t === 'koji-master') renderKojiChips();
+}
+
+/* ---------- 月・日付の計算 ---------- */
+
+function getMonths(n) {
+  const now  = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return Array.from({ length: n + 2 }, (_, i) =>
+    new Date(base.getFullYear(), base.getMonth() + i, 1));
+}
+
+function getFiscalMonths() {
+  const now = new Date();
+  const y   = now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+  const last = new Date(y, 2, 1);
+  const months = [];
+  for (let d = new Date(now.getFullYear(), now.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
+    months.push(new Date(d));
+  }
+  return months;
+}
+
+function dayFrac(dateStr, m) {
+  const d  = parseLocal(dateStr);
+  const m0 = new Date(m.getFullYear(), m.getMonth(), 1);
+  const m1 = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+  if (d <= m0) return 0;
+  if (d >= m1) return 1;
+  return (d - m0) / (m1 - m0);
+}
+
+function isSpot(row) { return row.config === 'スポット'; }
+function isPlan(row) { return row.type === '予定'; }
+function useSolidBar(row) { return !isSpot(row) && !isPlan(row); }
+
+const MIN_BAR_W = 0.12;
+function widen(left, right) {
+  let w = right - left;
+  if (w >= MIN_BAR_W) return { left, width: w };
+  const center = (left + right) / 2;
+  let l = center - MIN_BAR_W / 2;
+  l = Math.max(0, Math.min(l, 1 - MIN_BAR_W));
+  return { left: l, width: Math.min(MIN_BAR_W, 1 - l) };
+}
+
+function hatchBg(color) {
+  return `repeating-linear-gradient(45deg, ${color} 0 2px, transparent 2px 5px)`;
+}
+
+function spotRadius(isStartCell, isEndCell) {
+  if (isStartCell && isEndCell) return 'border-radius:9px;';
+  if (isStartCell)              return 'border-radius:9px 0 0 9px;';
+  if (isEndCell)                return 'border-radius:0 9px 9px 0;';
+  return 'border-radius:0;';
+}
+
+/* ---------- ガント描画 ---------- */
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-person').classList.toggle('active', v === 'person');
+  document.getElementById('view-koji').classList.toggle('active', v === 'koji');
+  renderGantt();
+}
+
+function renderGantt(monthsOverride, forPrint) {
+  const n      = parseInt(document.getElementById('sel-range').value);
+  const fp     = document.getElementById('sel-person').value;
+  const months = monthsOverride || getMonths(n);
+  const now    = new Date();
+
+  const sel  = document.getElementById('sel-person');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">全員</option>';
+  masters.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    sel.appendChild(o);
+  });
+  sel.value = prev;
+
+  const rangeStart = months[0];
+  const lastM      = months[months.length - 1];
+  const rangeEnd   = new Date(lastM.getFullYear(), lastM.getMonth() + 1, 1);
+  const inRange = r => {
+    if (!r.start) return false;
+    const rs  = parseLocal(r.start);
+    const eff = finalEndStrOf(r) || r.end || r.start;
+    const re  = parseLocal(eff);
+    return rs < rangeEnd && re >= rangeStart;
+  };
+  const active = kojiData.filter(inRange);
+  const rows   = fp ? active.filter(r => r.person === fp) : active;
+
+  const view = currentView;
+
+  function barCellsHtml(row, sep) {
+    const color  = COLOR[row.type] || '#888';
+    const light  = LIGHT[row.type] || '#eee';
+    const spot   = isSpot(row);
+    const plan   = isPlan(row);
+    const re     = parseLocal(row.end);
+    const rex    = row.ext ? parseLocal(row.ext) : null;
+    const hasExt = rex && rex > re;
+    const segs   = segmentsOf(row);
+    const gaps   = gapsOf(row);
+    const finalEndStr = finalEndStrOf(row);
+    const finalEnd    = parseLocal(finalEndStr);
+
+    const bodyHtml = (segStart, segEnd, m, mNext, roundRightAllowed) => {
+      const bodyL = dayFrac(segStart, m);
+      const bodyR = dayFrac(segEnd,   m);
+      const bodyW = bodyR - bodyL;
+      if (bodyW <= 0) return { html: '', bodyL, bodyW };
+      const sD = parseLocal(segStart), eD = parseLocal(segEnd);
+      const isStartCell = sD >= m && sD < mNext;
+      const isEndCell   = eD >= m && eD < mNext;
+      const roundR = isEndCell && roundRightAllowed;
+      const radius = (isStartCell && roundR) ? '9px'
+                   : isStartCell ? '9px 0 0 9px'
+                   : roundR      ? '0 9px 9px 0' : '0';
+      let out = '';
+      if (spot) {
+        const singleCell = isStartCell && isEndCell;
+        const sRad = spotRadius(isStartCell, isEndCell);
+        const seg  = singleCell ? widen(bodyL, bodyR) : { left: bodyL, width: bodyW };
+        out = `<div class="bar-spot"
+          style="left:${seg.left*100}%;width:${seg.width*100}%;border-color:rgba(255,255,255,.9);background:${color};${sRad}${!isStartCell ? 'border-left:none;' : ''}${!isEndCell ? 'border-right:none;' : ''}"
+          onclick="openPop(event,${row.id})"></div>`;
+      } else if (plan) {
+        out = `<div class="bar-plan"
+          style="left:${bodyL*100}%;width:${bodyW*100}%;border-color:${color};border-radius:${radius}"
+          onclick="openPop(event,${row.id})"></div>`;
+      } else {
+        out = `<div class="bar-track"
+          style="left:${bodyL*100}%;width:${bodyW*100}%;background:${color};border-radius:${radius}"
+          onclick="openPop(event,${row.id})"></div>`;
+      }
+      return { html: out, bodyL, bodyW, isStartCell };
+    };
+
+    let cells = '';
+    let commentDone = false;
+    months.forEach(m => {
+      const mNext = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+      let overlaps = false;
+      segs.forEach(s => { if (parseLocal(s.start) < mNext && parseLocal(s.end) >= m) overlaps = true; });
+      if (hasExt && parseLocal(row.end) < mNext && rex >= m) overlaps = true;
+      gaps.forEach(g => { if (parseLocal(g.start) < mNext && parseLocal(g.end) >= m) overlaps = true; });
+
+      const willComment = overlaps && row.comment && !commentDone;
+      const cls = ['month-cell', sep, willComment ? 'has-comment' : ''].filter(Boolean).join(' ');
+      cells += `<td class="${cls}">`;
+      if (overlaps) {
+        cells += '<div class="bar-wrap">';
+        let firstBody = null;
+        segs.forEach((s, si) => {
+          const roundRightAllowed = !(si === 0 && hasExt);
+          const b = bodyHtml(s.start, s.end, m, mNext, roundRightAllowed);
+          if (b.html) { cells += b.html; if (!firstBody) firstBody = b; }
+        });
+        if (hasExt) {
+          const extL = dayFrac(row.end, m);
+          const extR = dayFrac(row.ext, m);
+          const extW = extR - extL;
+          const extEndCell = rex >= m && rex < mNext;
+          if (extW > 0) {
+            const radius = extEndCell ? '0 9px 9px 0' : '0';
+            cells += `<div class="bar-ext"
+              style="left:${extL*100}%;width:${extW*100}%;border-color:${color};background:${light};border-radius:${radius}"
+              onclick="openPop(event,${row.id})">
+              <div class="bar-ext-hatch" style="background:${hatchBg(color)}"></div>
+            </div>`;
+          }
+        }
+        gaps.forEach(g => {
+          const gapL = dayFrac(g.start, m);
+          const gapR = dayFrac(g.end,   m);
+          const gapW = gapR - gapL;
+          if (gapW > 0) {
+            cells += `<div class="gap-line" style="left:${gapL*100}%;width:${gapW*100}%"></div>`;
+            if (gapW > 0.7) cells += `<div class="gap-label" style="left:${(gapL+gapW/2)*100}%;transform:translateX(-50%)">中断</div>`;
+          }
+        });
+        if (finalEnd >= m && finalEnd < mNext) {
+          const endF = dayFrac(finalEndStr, m);
+          cells += `<div class="bar-end-date" style="left:${endF*100}%;color:${color}">${finalEnd.getMonth()+1}/${finalEnd.getDate()}${hasExt ? '(延)' : ''}</div>`;
+        }
+        if (willComment && firstBody) {
+          cells += `<div class="bar-comment" style="left:${firstBody.isStartCell ? firstBody.bodyL*100 : 0}%">💬 ${escapeHtml(row.comment)}</div>`;
+          commentDone = true;
+        }
+        cells += '</div>';
+      }
+      cells += '</td>';
+    });
+    return cells;
+  }
+
+  const spanDays = r => {
+    const s = parseLocal(r.start), e = parseLocal(finalEndStrOf(r) || r.end || r.start);
+    return (e - s);
+  };
+
+  const col1 = view === 'koji' ? '工事名' : '担当者';
+  const col2 = view === 'koji' ? '担当者' : '工事名';
+  let html = '<table class="gantt"><thead><tr>';
+  html += `<th class="col-name">${col1}</th>`;
+  html += `<th class="col-job">${col2}</th>`;
+  html += '<th class="col-prog">進捗</th>';
+  months.forEach(m => {
+    const isNow = m.getFullYear() === now.getFullYear() && m.getMonth() === now.getMonth();
+    html += `<th style="${isNow ? 'color:var(--red);font-weight:700' : ''}">${m.getMonth() + 1}月</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  if (view === 'koji') {
+    const kgroups = {};
+    rows.forEach(r => { (kgroups[r.name] = kgroups[r.name] || []).push(r); });
+    const names = Object.keys(kgroups).sort((a, b) => {
+      const sa = Math.min(...kgroups[a].map(r => parseLocal(r.start)));
+      const sb = Math.min(...kgroups[b].map(r => parseLocal(r.start)));
+      return sa - sb;
+    });
+
+    if (!names.length) {
+      html += `<tr><td colspan="${3 + months.length}"><div class="empty">データがありません</div></td></tr>`;
+    }
+
+    names.forEach((name, gi) => {
+      const entries = kgroups[name].slice().sort((a, b) => spanDays(b) - spanDays(a));
+      const isLastGroup = gi === names.length - 1;
+      const grpSep = !isLastGroup ? 'sep' : '';
+      const color  = COLOR[entries[0].type] || '#888';
+      const prog   = entries[0].progress || 0;
+
+      entries.forEach((row, ri) => {
+        const isLastRow = ri === entries.length - 1;
+        const sep = isLastRow && !isLastGroup ? 'sep' : '';
+        html += '<tr>';
+        if (ri === 0) {
+          html += `<td class="col-name ${grpSep}" rowspan="${entries.length}" style="border-left:3px solid ${color};text-align:left">${escapeHtml(name)}</td>`;
+        }
+        const memoMark = row.comment ? ' <span style="color:#9a6000;font-size:10px">●</span>' : '';
+        html += `<td class="col-job ${sep}" onclick="openPopTerm(event,${row.id})"
+          title="${escapeHtml(row.person)}（クリックで工期変更）">${escapeHtml(row.person)}${memoMark}</td>`;
+        if (ri === 0) {
+          html += `<td class="col-prog ${grpSep}" rowspan="${entries.length}"
+            onclick="openPopProg(event,${entries[0].id})" title="クリックで進捗・コメント入力">
+            <div class="prog-num" style="color:${color}">${prog}%</div>
+            <div class="prog-gauge"><div class="prog-gauge-fill" style="width:${prog}%;background:${color}"></div></div>
+          </td>`;
+        }
+        html += barCellsHtml(row, sep);
+        html += '</tr>';
+      });
+    });
+
+  } else {
+    const groups = {};
+    if (fp) {
+      if (masters.includes(fp)) groups[fp] = [];
+    } else {
+      masters.forEach(p => { groups[p] = []; });
+    }
+    rows.forEach(r => {
+      if (!groups[r.person]) groups[r.person] = [];
+      groups[r.person].push(r);
+    });
+
+    const persons = Object.keys(groups);
+    if (!persons.length) {
+      html += `<tr><td colspan="${3 + months.length}"><div class="empty">データがありません</div></td></tr>`;
+    }
+
+    persons.forEach((person, pi) => {
+      const entries     = groups[person];
+      const isLastGroup = pi === persons.length - 1;
+      const nameSep     = !isLastGroup ? 'sep' : '';
+      const safePerson  = String(person).replace(/'/g, "\\'");
+      const addBtn = (isAdmin && !forPrint)
+        ? `<button class="add-koji-btn" onclick="event.stopPropagation();openAddModal('${safePerson}')" title="この担当者で工事を追加">＋</button>`
+        : '';
+
+      if (entries.length === 0) {
+        html += '<tr>';
+        html += `<td class="col-name ${nameSep}">${escapeHtml(person)}${addBtn}</td>`;
+        html += `<td class="col-job ${nameSep}"></td>`;
+        html += `<td class="col-prog ${nameSep}" style="cursor:default"></td>`;
+        months.forEach(() => { html += `<td class="month-cell ${nameSep}"></td>`; });
+        html += '</tr>';
+        return;
+      }
+
+      entries.forEach((row, ri) => {
+        const isLastRow = ri === entries.length - 1;
+        const sep       = isLastRow && !isLastGroup ? 'sep' : '';
+        const color     = COLOR[row.type] || '#888';
+        const nBreaks   = (row.breaks || []).length;
+
+        html += '<tr>';
+        if (ri === 0) {
+          html += `<td class="col-name ${nameSep}" rowspan="${entries.length}">${escapeHtml(person)}${addBtn}</td>`;
+        }
+        const memoMark = row.comment ? ' <span style="color:#9a6000;font-size:10px">●</span>' : '';
+        const pmark    = nBreaks > 0 ? ` <span style="font-size:9px;color:#888">(中断${nBreaks})</span>` : '';
+        html += `<td class="col-job ${sep}" style="border-left:3px solid ${color}"
+          onclick="openPopTerm(event,${row.id})"
+          title="${escapeHtml(row.name)}（クリックで工期変更）">${escapeHtml(row.name)}${pmark}${memoMark}</td>`;
+        html += `<td class="col-prog ${sep}" onclick="openPopProg(event,${row.id})" title="クリックで進捗・コメント入力">
+          <div class="prog-num" style="color:${color}">${row.progress}%</div>
+          <div class="prog-gauge"><div class="prog-gauge-fill" style="width:${row.progress}%;background:${color}"></div></div>
+        </td>`;
+        html += barCellsHtml(row, sep);
+        html += '</tr>';
+      });
+    });
+  }
+
+  html += '</tbody></table>';
+  document.getElementById('gantt-container').innerHTML = html;
+}
+
+/* ---------- バー押下パネル ---------- */
+
+function openPop(e, id) {
+  e.stopPropagation();
+  const r = kojiData.find(x => x.id === id);
+  if (!r) return;
+  editId = id;
+
+  document.getElementById('pop-title').textContent = r.name;
+  document.getElementById('pop-sub').textContent   =
+    `${r.person} / ${r.type} / ${r.config}`;
+
+  document.getElementById('pop-range').value = r.progress;
+  syncVal(r.progress);
+  document.getElementById('pop-comment').value = r.comment || '';
+
+  const ps = document.getElementById('f-person');
+  ps.innerHTML = '';
+  masters.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p; ps.appendChild(o);
+  });
+  ps.value = r.person;
+
+  const ns = document.getElementById('f-name');
+  ns.innerHTML = '';
+  const names = kojiMasters.includes(r.name) ? kojiMasters : [r.name, ...kojiMasters];
+  names.forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k; ns.appendChild(o);
+  });
+  ns.value = r.name;
+
+  document.getElementById('f-type').value   = r.type;
+  document.getElementById('f-config').value = r.config;
+  document.getElementById('f-start').value  = r.start;
+  document.getElementById('f-end').value    = r.end;
+  document.getElementById('f-ext').value    = r.ext || '';
+
+  renderPeriodList('', r.breaks || []);
+
+  document.getElementById('tab-term').textContent = isAdmin ? '工事編集' : '工期変更';
+  switchPopTab(isAdmin ? 'term' : 'prog');
+
+  const pop = document.getElementById('popover');
+  pop.classList.add('open');
+  document.getElementById('backdrop').classList.add('open');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const popW = pop.offsetWidth;
+  const popH = pop.offsetHeight;
+
+  let left = rect.left + window.scrollX - 20;
+  left = Math.min(left, window.scrollX + window.innerWidth - popW - 12);
+  left = Math.max(left, window.scrollX + 8);
+
+  let top = rect.bottom + window.scrollY + 9;
+  if (rect.bottom + popH + 20 > window.innerHeight) {
+    top = rect.top + window.scrollY - popH - 9;
+    document.querySelector('.pop-arrow').style.display = 'none';
+  } else {
+    document.querySelector('.pop-arrow').style.display = '';
+  }
+
+  pop.style.left = left + 'px';
+  pop.style.top  = Math.max(top, window.scrollY + 8) + 'px';
+}
+
+function openPopTerm(e, id) {
+  openPop(e, id);
+  switchPopTab('term');
+}
+
+function openPopProg(e, id) {
+  openPop(e, id);
+  switchPopTab('prog');
+}
+
+function switchPopTab(t) {
+  document.getElementById('tab-prog').classList.toggle('active', t === 'prog');
+  document.getElementById('tab-term').classList.toggle('active', t === 'term');
+  document.getElementById('panel-prog').classList.toggle('active', t === 'prog');
+  document.getElementById('panel-term').classList.toggle('active', t === 'term');
+}
+
+function closePop() {
+  document.getElementById('popover').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('open');
+  editId = null;
+}
+
+function periodListEl(prefix) {
+  return document.getElementById(prefix === 'a' ? 'a-period-list' : 'period-list');
+}
+function renderPeriodList(prefix, periods) {
+  const el = periodListEl(prefix);
+  el.innerHTML = '';
+  (periods || []).forEach(p => addPeriodRow(prefix, p.start, p.end));
+}
+function addPeriodRow(prefix, start = '', end = '') {
+  if (prefix && typeof prefix !== 'string') prefix = '';
+  const el = periodListEl(prefix);
+  const idx = el.querySelectorAll('.period-row').length + 1;
+  const row = document.createElement('div');
+  row.className = 'period-row';
+  row.innerHTML =
+    `<button type="button" class="period-del" title="この中断を削除">× 削除</button>
+     <div class="p-label">中断${idx} 開始日</div>
+     <div class="f-row"><input type="date" class="pf-start" value="${start}"></div>
+     <div class="p-label">中断${idx} 終了日（再開の前日まで）</div>
+     <div class="f-row" style="margin-bottom:0"><input type="date" class="pf-end" value="${end}"></div>`;
+  row.querySelector('.period-del').onclick = () => { row.remove(); renumberPeriods(prefix); };
+  el.appendChild(row);
+}
+function renumberPeriods(prefix) {
+  const el = periodListEl(prefix);
+  el.querySelectorAll('.period-row').forEach((row, i) => {
+    const labels = row.querySelectorAll('.p-label');
+    if (labels[0]) labels[0].textContent = `中断${i + 1} 開始日`;
+    if (labels[1]) labels[1].textContent = `中断${i + 1} 終了日（再開の前日まで）`;
+  });
+}
+function collectPeriods(prefix) {
+  const el = periodListEl(prefix);
+  return Array.from(el.querySelectorAll('.period-row')).map(row => ({
+    start: row.querySelector('.pf-start').value,
+    end:   row.querySelector('.pf-end').value,
+  }));
+}
+
+function syncVal(v) {
+  const r = kojiData.find(x => x.id === editId);
+  const el = document.getElementById('pop-val');
+  el.textContent = v + '%';
+  el.style.color = r ? (COLOR[r.type] || '#2055a0') : '#2055a0';
+}
+
+function stepProg(d) {
+  const range = document.getElementById('pop-range');
+  const v = Math.max(0, Math.min(100, parseInt(range.value) + d));
+  range.value = v;
+  syncVal(v);
+}
+
+async function saveProgPop() {
+  const r = kojiData.find(x => x.id === editId);
+  if (!r) return;
+  const prog    = parseInt(document.getElementById('pop-range').value);
+  const comment = document.getElementById('pop-comment').value.trim();
+
+  const targets = kojiData.filter(x => x.name === r.name);
+
+  showLoading(true);
+  try {
+    await Promise.all(targets.map(t => {
+      const cmt = (t.id === r.id) ? comment : (t.comment || '');
+      return gasPost({ action:'saveProgress', id: t.id, progress: prog, comment: cmt });
+    }));
+    targets.forEach(t => {
+      t.progress = prog;
+      if (t.id === r.id) t.comment = comment;
+    });
+    persist();
+    closePop();
+    renderGantt();
+    const syncMsg = targets.length > 1 ? `（進捗を${targets.length}件同期）` : '';
+    showToast('保存しました' + syncMsg);
+  } catch(e) {
+    showToast('保存エラー: ' + e.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function saveTermPop() {
+  const existing = kojiData.find(x => x.id === editId);
+  if (!existing) return;
+
+  const start  = document.getElementById('f-start').value;
+  const end    = document.getElementById('f-end').value;
+  const ext    = document.getElementById('f-ext').value;
+  const breaks = collectPeriods('');
+
+  const err = validateTerm(start, end, ext, breaks);
+  if (err) { alert(err); return; }
+
+  const entry = { ...existing, start, end, ext, breaks };
+  if (isAdmin) {
+    entry.person = document.getElementById('f-person').value;
+    entry.name   = document.getElementById('f-name').value;
+    entry.type   = document.getElementById('f-type').value;
+    entry.config = document.getElementById('f-config').value;
+    if (!entry.person || !entry.name) { alert('担当者・工事名は必須です'); return; }
+  }
+
+  showLoading(true);
+  try {
+    await gasPost({ action:'saveKoji', password: ADMIN_PW, data: entry });
+    kojiData[kojiData.findIndex(x => x.id === editId)] = entry;
+    persist();
+    closePop();
+    renderGantt();
+    showToast('保存しました');
+  } catch(e) {
+    showToast('保存エラー: ' + e.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function validateTerm(start, end, ext, breaks) {
+  if (!start || !end)   return '開始日・終了日は必須です';
+  if (start > end)      return '開始日は終了日より前にしてください';
+  if (ext && ext < end) return '延長日は終了日より後にしてください';
+
+  const bks = (breaks || []).slice().sort((a, b) => (a.start < b.start ? -1 : 1));
+  let prevEnd = start;
+  for (let i = 0; i < bks.length; i++) {
+    const b = bks[i];
+    if (!b.start || !b.end) return `中断${i + 1} は開始日と終了日の両方が必要です`;
+    if (b.start > b.end)    return `中断${i + 1} の開始日は終了日より前にしてください`;
+    if (b.start <= start)   return `中断${i + 1} は工期の開始日より後にしてください`;
+    if (b.end >= end)       return `中断${i + 1} は工期の終了日より前にしてください`;
+    if (b.start <= prevEnd) return `中断${i + 1} が前の中断と重なっています`;
+    prevEnd = b.end;
+  }
+  return null;
+}
+
+async function delKojiPop() {
+  if (!isAdmin) return;
+  if (!confirm('この工事を削除しますか？')) return;
+  const id = editId;
+  showLoading(true);
+  try {
+    await gasPost({ action:'deleteKoji', password: ADMIN_PW, id });
+    kojiData = kojiData.filter(x => x.id !== id);
+    persist();
+    closePop();
+    renderGantt();
+    showToast('削除しました');
+  } catch(e) {
+    showToast('削除エラー: ' + e.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+/* ---------- 新規追加モーダル（管理者のみ） ---------- */
+
+function openAddModal(person) {
+  if (!isAdmin) return;
+  const ps = document.getElementById('a-person');
+  ps.innerHTML = '<option value="">— 選択してください —</option>';
+  masters.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p; ps.appendChild(o);
+  });
+  ps.value = person || '';
+
+  const ns = document.getElementById('a-name');
+  ns.innerHTML = '<option value="">— 選択してください —</option>';
+  kojiMasters.forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k; ns.appendChild(o);
+  });
+  ns.value = '';
+
+  document.getElementById('a-type').value   = '元請';
+  document.getElementById('a-config').value = '常駐';
+  document.getElementById('a-start').value  = '';
+  document.getElementById('a-end').value    = '';
+  document.getElementById('a-ext').value    = '';
+  renderPeriodList('a', []);
+  document.getElementById('modal-add').classList.add('open');
+}
+
+function closeAddModal() {
+  document.getElementById('modal-add').classList.remove('open');
+}
+
+async function saveAdd() {
+  const entry = {
+    id:       nextId,
+    person:   document.getElementById('a-person').value,
+    name:     document.getElementById('a-name').value,
+    type:     document.getElementById('a-type').value,
+    config:   document.getElementById('a-config').value,
+    start:    document.getElementById('a-start').value,
+    end:      document.getElementById('a-end').value,
+    ext:      document.getElementById('a-ext').value,
+    breaks:   collectPeriods('a'),
+    progress: 0,
+    comment:  '',
+  };
+  if (!entry.person || !entry.name) { alert('担当者・工事名は必須です'); return; }
+  const err = validateTerm(entry.start, entry.end, entry.ext, entry.breaks);
+  if (err) { alert(err); return; }
+
+  showLoading(true);
+  try {
+    await gasPost({ action:'saveKoji', password: ADMIN_PW, data: entry });
+    kojiData.push(entry);
+    nextId = entry.id + 1;
+    persist();
+    closeAddModal();
+    renderGantt();
+    showToast('追加しました');
+  } catch(e) {
+    showToast('保存エラー: ' + e.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+/* ---------- 進捗一覧 ---------- */
+
+function renderProgressOnly() {
+  const sel  = document.getElementById('sel-prog-person');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">全員</option>';
+  masters.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p; sel.appendChild(o);
+  });
+  sel.value = prev;
+
+  const fp   = sel.value;
+  const list = fp ? kojiData.filter(r => r.person === fp) : kojiData;
+  const el   = document.getElementById('progress-only-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">データがありません</div>'; return; }
+
+  const groups = {};
+  list.forEach(r => { (groups[r.person] = groups[r.person] || []).push(r); });
+
+  let html = '';
+  Object.entries(groups).forEach(([person, entries]) => {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text-sub);padding:6px 2px;border-bottom:1px solid var(--border);margin:8px 0">${escapeHtml(person)}</div>`;
+    entries.forEach(row => {
+      const color = COLOR[row.type] || '#888';
+      const bg    = TYPE_BG[row.type] || '#f0f0f0';
+      const fg    = TYPE_FG[row.type] || '#444';
+      const prog  = row.progress || 0;
+      const extTxt = (row.ext && row.ext > row.end) ? ` → ${fmtDate(row.ext)}（延長）` : '';
+      const p2Txt  = hasBreaks(row)
+        ? row.breaks.map(b => ` ／ 中断 ${fmtDate(b.start)}〜${fmtDate(b.end)}`).join('')
+        : '';
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 15px;margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:9px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700">${escapeHtml(row.name)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center">
+              <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${bg};color:${fg}">${row.type}</span>
+              <span style="font-size:11px;color:var(--text-sub)">${fmtDate(row.start)} 〜 ${fmtDate(row.end)}${extTxt}${p2Txt}</span>
+            </div>
+          </div>
+          <div style="font-size:22px;font-weight:700;color:${color};white-space:nowrap">${prog}%</div>
+        </div>
+        <div style="width:100%;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:8px">
+          <div style="height:100%;border-radius:3px;background:${color};width:${prog}%"></div>
+        </div>
+        ${row.comment ? `<div style="font-size:11px;color:#7a5000;background:#fff8e4;border:1px solid #f0d070;border-radius:6px;padding:6px 10px;line-height:1.5;white-space:pre-wrap">💬 ${escapeHtml(row.comment)}</div>` : ''}
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+/* ---------- マスタ ---------- */
+
+function renderPersonChips() {
+  const el = document.getElementById('person-chips');
+  if (!masters.length) {
+    el.innerHTML = '<span style="font-size:13px;color:var(--text-sub)">担当者がいません</span>';
+    return;
+  }
+  el.innerHTML = masters.map(name =>
+    `<div class="chip"><span>${escapeHtml(name)}</span>
+      <button class="chip-del" onclick="removePerson('${String(name).replace(/'/g,"\\'")}')" title="削除">×</button>
+    </div>`).join('');
+}
+
+async function addPerson() {
+  const inp  = document.getElementById('inp-person');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (masters.includes(name)) { alert('すでに登録されています'); return; }
+  showLoading(true);
+  try {
+    await gasPost({ action:'saveMaster', password: ADMIN_PW, name });
+    masters.push(name);
+    persist();
+    inp.value = '';
+    renderPersonChips();
+    renderGantt();
+    showToast(name + ' を追加しました');
+  } catch(e) {
+    showToast('エラー: ' + e.message, true);
+  } finally { showLoading(false); }
+}
+
+async function removePerson(name) {
+  const used = kojiData.some(r => r.person === name);
+  if (used && !confirm(`「${name}」は工事データで使用中です。削除しますか？`)) return;
+  showLoading(true);
+  try {
+    await gasPost({ action:'deleteMaster', password: ADMIN_PW, name });
+    masters = masters.filter(m => m !== name);
+    persist();
+    renderPersonChips();
+    renderGantt();
+    showToast(name + ' を削除しました');
+  } catch(e) {
+    showToast('エラー: ' + e.message, true);
+  } finally { showLoading(false); }
+}
+
+function renderKojiChips() {
+  const el = document.getElementById('koji-chips');
+  if (!kojiMasters.length) {
+    el.innerHTML = '<span style="font-size:13px;color:var(--text-sub)">工事マスタがありません</span>';
+    return;
+  }
+  el.innerHTML = kojiMasters.map(name =>
+    `<div class="chip"><span>${escapeHtml(name)}</span>
+      <button class="chip-del" onclick="removeKoji('${String(name).replace(/'/g,"\\'")}')" title="削除">×</button>
+    </div>`).join('');
+}
+
+async function addKoji() {
+  const inp  = document.getElementById('inp-koji');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (kojiMasters.includes(name)) { alert('すでに登録されています'); return; }
+  showLoading(true);
+  try {
+    await gasPost({ action:'saveKojiMaster', password: ADMIN_PW, name });
+    kojiMasters.push(name);
+    persist();
+    inp.value = '';
+    renderKojiChips();
+    showToast(name + ' を追加しました');
+  } catch(e) {
+    showToast('エラー: ' + e.message, true);
+  } finally { showLoading(false); }
+}
+
+async function removeKoji(name) {
+  const used = kojiData.some(r => r.name === name);
+  if (used && !confirm(`「${name}」は工事データで使用中です。削除しますか？`)) return;
+  showLoading(true);
+  try {
+    await gasPost({ action:'deleteKojiMaster', password: ADMIN_PW, name });
+    kojiMasters = kojiMasters.filter(m => m !== name);
+    persist();
+    renderKojiChips();
+    showToast(name + ' を削除しました');
+  } catch(e) {
+    showToast('エラー: ' + e.message, true);
+  } finally { showLoading(false); }
+}
+
+/* ---------- 印刷 ---------- */
+
+function printGantt() {
+  switchTab('gantt');
+  closePop();
+  const now = new Date();
+  document.getElementById('print-date').textContent =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 時点`;
+
+  renderGantt(getFiscalMonths(), true);
+
+  const page  = document.getElementById('page-gantt');
+  const scale = document.getElementById('print-scale');
+  page.classList.add('print-mode');
+  scale.style.zoom = '';
+
+  const table  = document.querySelector('#gantt-container table');
+  const PAGE_H = 1060;
+  const total  = (table ? table.offsetHeight : 0) + 90;
+  const s = Math.min(1, PAGE_H / total) * 0.97;
+  scale.style.zoom = String(s);
+
+  window.print();
+}
+
+window.addEventListener('afterprint', () => {
+  document.getElementById('page-gantt').classList.remove('print-mode');
+  document.getElementById('print-scale').style.zoom = '';
+  renderGantt();
+});
+</script>
+</body>
+</html>
