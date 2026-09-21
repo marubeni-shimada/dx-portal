@@ -1,1 +1,168 @@
+<title>現場DX ツールポータル</title>
+<style>
+:root{
+  --bg:#f4f6fb;--card:#ffffff;--ink:#1f2733;--sub:#6b7686;--line:#e6eaf1;
+  --blue:#2f6bff;--blue2:#1e54d8;--navy:#12224a;--iconbg:#eef1fb;
+  --prob:#c8452f;--probbg:#fff2ee;--sol:#0f9d58;--solbg:#e7f6ee;--lav:#7c5cff;--lavbg:#efeafe;--gold:#c7862a;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1017;--card:#141a24;--ink:#e7ecf3;--sub:#9aa6b6;--line:#26303d;--iconbg:#1b2432;--navy:#0b1224;
+  --blue:#5b86ff;--blue2:#3f6ae0;--prob:#e0857a;--probbg:#2a1713;--sol:#57b45f;--solbg:#12281c;--lavbg:#211a3a;}}
+:root[data-theme="dark"]{
+  --bg:#0c1017;--card:#141a24;--ink:#e7ecf3;--sub:#9aa6b6;--line:#26303d;--iconbg:#1b2432;--navy:#0b1224;
+  --blue:#5b86ff;--blue2:#3f6ae0;--prob:#e0857a;--probbg:#2a1713;--sol:#57b45f;--solbg:#12281c;--lavbg:#211a3a;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",system-ui,sans-serif;}
+.top{background:var(--card);border-bottom:1px solid var(--line);}
+.top .in{max-width:1120px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:12px;}
+.logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.ht{flex:1;} .ht h1{margin:0;font-size:17px;font-weight:800;} .ht p{margin:1px 0 0;font-size:12px;color:var(--sub);}
+.hbtn{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:10px 16px;font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue2));color:#fff;text-align:center;padding:24px 22px;}
+.hero h2{font-size:26px;font-weight:900;margin:0 0 6px;}
+.hero h2 .u{color:#ffd766;}
+.hero p{font-size:14px;color:#dbe6ff;margin:0;}
+.wrap{max-width:1120px;margin:0 auto;padding:22px 22px 44px;}
+.st{font-size:16px;font-weight:900;margin:0 0 12px;}
+/* flagships side by side */
+.tools2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px;}
+.tool{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;position:relative;box-shadow:0 2px 10px rgba(30,60,120,.05);}
+.tool.rec{border:2px solid var(--gold);}
+.ribbon{position:absolute;top:-10px;left:16px;background:var(--gold);color:#fff;font-size:11px;font-weight:800;border-radius:16px;padding:2px 11px;}
+.thook{font-size:15px;font-weight:900;color:var(--prob);line-height:1.5;margin:4px 0 12px;}
+.psline{display:flex;gap:8px;margin-bottom:6px;font-size:12.5px;}
+.psline .tag{flex-shrink:0;font-weight:800;border-radius:6px;padding:1px 8px;font-size:11px;}
+.psline.p .tag{background:var(--probbg);color:var(--prob);}
+.psline.s .tag{background:var(--solbg);color:var(--sol);}
+.psline p{margin:0;color:var(--ink);}
+.tname{font-size:16px;font-weight:900;margin:14px 0 10px;}
+.tname .c{font-size:11.5px;color:var(--sub);font-weight:600;margin-left:6px;}
+.btn{display:inline-block;background:var(--blue);color:#fff;font-size:13.5px;font-weight:800;text-decoration:none;border-radius:9px;padding:10px 18px;}
+.btn:hover{background:var(--blue2);}
+.tut{font-size:11.5px;color:var(--sub);margin-top:8px;}
+/* make grid compact */
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 14px;}
+.search{flex:1;min-width:200px;position:relative;}
+.search input{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 12px 9px 34px;font:inherit;font-size:13.5px;}
+.search input:focus{outline:none;border-color:var(--blue);}
+.search .mag{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:13px;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:26px;padding:6px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.cell{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s,transform .12s;}
+.cell:hover{border-color:var(--blue);transform:translateY(-1px);}
+.cico{width:34px;height:34px;border-radius:8px;background:var(--iconbg);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.cn{font-size:13px;font-weight:800;margin:0;}
+.cc{font-size:11px;color:var(--sub);margin:1px 0 0;}
+.empty{color:var(--sub);text-align:center;padding:18px;font-size:13px;}
+.foot{margin-top:24px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:14px;padding:22px;text-align:center;}
+.foot h2{margin:0 0 6px;font-size:19px;font-weight:900;}
+.foot p{margin:0 0 12px;font-size:13px;color:#e6edff;}
+.foot .pill{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);border-radius:26px;padding:6px 14px;font-size:13px;font-weight:700;margin:3px;}
+.note{color:var(--sub);font-size:11px;text-align:center;margin-top:14px;}
+@media(max-width:720px){ .tools2{grid-template-columns:1fr;} .hero h2{font-size:21px;} }
+</style>
 
+<div class="top">
+  <div class="in">
+    <div class="logo">DX</div>
+    <div class="ht"><h1>現場DX ツールポータル</h1><p>丸紅（島田）が自社で作って使っているツール</p></div>
+    <button class="hbtn" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">困りごとを相談</button>
+  </div>
+</div>
+
+<div class="hero">
+  <h2>こんな“困りごと”、<span class="u">ありませんか？</span></h2>
+  <p>自分たちが困って作り、実際に使っているツールです。触ってみてください。</p>
+</div>
+
+<div style="background:var(--card);border-bottom:1px solid var(--line);">
+  <div class="wrap" style="padding:16px 22px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap;text-align:center;">
+    <div><div style="font-size:28px;font-weight:900;color:var(--blue);line-height:1;">9<span style="font-size:14px;">ツール</span></div><div style="font-size:12px;color:var(--sub);margin-top:4px;">自社で内製・運用中</div></div>
+    <div><div style="font-size:28px;font-weight:900;color:var(--blue);line-height:1;">3時間→30分</div><div style="font-size:12px;color:var(--sub);margin-top:4px;">施工体制台帳の作成（自社実績）</div></div>
+    <div><div style="font-size:28px;font-weight:900;color:var(--blue);line-height:1;">100%</div><div style="font-size:12px;color:var(--sub);margin-top:4px;">御社に合わせてカスタマイズ</div></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="st" style="margin-bottom:2px;">自社で使っているツール（触れます）</p>
+  <p style="font-size:14px;color:var(--blue);font-weight:800;margin:0 0 14px;">▶ これらは全部、御社に合わせて作れます・カスタマイズできます。</p>
+  <div class="tools2">
+    <div class="tool rec">
+      <span class="ribbon">★ おすすめ</span>
+      <div class="thook">🙋 施工体制台帳、まだ手作業で何時間もかけていませんか？</div>
+      <div class="psline p"><span class="tag">困りごと</span><p>台帳・体系図・名簿が手作業。専任重複や健診切れの見落としで是正リスクも。</p></div>
+      <div class="psline s"><span class="tag">解決</span><p>会社を選ぶだけで自動作成。ミスも自動チェック。</p></div>
+      <div class="tname">施工体制ナビ<span class="c">施工体制台帳</span></div>
+      <a class="btn" href="sekou/" target="_blank">▶ デモを触ってみる</a>
+      <div class="tut">チュートリアル付き ・ <b style="color:var(--blue)">御社用に作れます</b></div>
+    </div>
+    <div class="tool">
+      <div class="thook">🙋 “誰がどの現場か”、頭の中とExcel頼みになっていませんか？</div>
+      <div class="psline p"><span class="tag">困りごと</span><p>人繰りが属人化。共有できず抜け漏れ・引き継ぎでバタバタ。</p></div>
+      <div class="psline s"><span class="tag">解決</span><p>クラウドで見える化・共有。工期連動で進捗も自動、台帳と連動。</p></div>
+      <div class="tname">人員配置表<span class="c">人員・労務</span></div>
+      <a class="btn" href="jinin/" target="_blank">▶ デモを触ってみる</a>
+      <div class="tut">チュートリアル付き ・ <b style="color:var(--blue)">御社用に作れます</b></div>
+    </div>
+  </div>
+
+  <p class="st">自社で内製したツール（実績）＋ 御社に作れるもの</p>
+  <div class="controls">
+    <div class="search"><span class="mag">🔍</span><input id="q" placeholder="キーワードで探す"></div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div id="list"></div>
+
+  <div class="foot" id="cta">
+    <h2>御社に合わせたツール、作れます。</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 14px;">
+      <span class="pill">✔ 現場の声を反映</span>
+      <span class="pill">✔ 御社用にカスタマイズ</span>
+      <span class="pill">✔ どんな“面倒”も改善</span>
+    </div>
+    <p style="font-size:16px;font-weight:800;color:#fff;margin:0 0 14px;">まずは一度、ご相談ください。</p>
+    <span class="pill">✉ mb-dx@marubeni-co.jp</span>
+    <span class="pill">🏢 どぼフェス ブースにて</span>
+  </div>
+  <p class="note">※ サービス名・連絡先は仮／デモの公開URLは準備中。</p>
+</div>
+
+<script>
+const MAKE=[
+ // 自社で内製・運用中（実績）
+ {name:"工事情報更新システム",cat:"施工管理",ico:"🏗️",real:true,url:"koji/"},
+ {name:"建退共（年次）",cat:"人員・労務",ico:"🏦",real:true,url:"kentaikyo/"},
+ {name:"スマホ集計",cat:"経理",ico:"📱",real:true},
+ {name:"交際費集計",cat:"経理",ico:"🧾",real:true},
+ {name:"入金確認",cat:"経理",ico:"💴",real:true},
+ {name:"取引先管理",cat:"その他",ico:"🤝",real:true,url:"torihiki/"},
+ {name:"タスク管理（個人）",cat:"その他",ico:"✅",real:true,url:"task/"},
+ // 御社に合わせて作れる例
+ {name:"日報・工事写真",cat:"施工管理",ico:"📋"},
+ {name:"進捗・工程の見える化",cat:"施工管理",ico:"📊"},
+ {name:"出面・勤怠の集計",cat:"人員・労務",ico:"🕐"},
+ {name:"原価・見積管理",cat:"経理",ico:"💰"},
+ {name:"各種帳票の自動作成",cat:"経理",ico:"📄"},
+ {name:"安全書類・KY・点検表",cat:"安全",ico:"🦺"},
+ {name:"今のExcelをシステムに",cat:"その他",ico:"🛠️"},
+];
+const CATS=["すべて","施工管理","人員・労務","経理","安全","その他"];
+let cat="すべて",q="";
+const chipsEl=document.getElementById("chips");
+CATS.forEach(c=>{const b=document.createElement("button");b.className="chip"+(c===cat?" on":"");b.textContent=c;
+  b.onclick=()=>{cat=c;[...chipsEl.children].forEach(x=>x.classList.toggle("on",x.textContent===c));render();};chipsEl.appendChild(b);});
+document.getElementById("q").addEventListener("input",e=>{q=e.target.value.trim();render();});
+function render(){
+  const list=document.getElementById("list");
+  const s=MAKE.filter(t=>(cat==="すべて"||t.cat===cat)&&(!q||(t.name+t.cat).toLowerCase().includes(q.toLowerCase())));
+  if(!s.length){list.innerHTML='<p class="empty">該当なし。まずはご相談ください。</p>';return;}
+  list.innerHTML='<div class="grid">'+s.map(t=>{
+    const st=t.real?('<span style="color:var(--sol);font-weight:800">✔ 自社で運用中</span>'+(t.url?' <span style="color:var(--blue);font-weight:800">▶ 触れる</span>':'')):'<span style="color:var(--lav);font-weight:800">🛠 御社に作れます</span>';
+    return '<div class="cell" data-url="'+(t.url||'')+'"><div class="cico">'+t.ico+'</div><div><p class="cn">'+t.name+'</p><p class="cc">'+t.cat+' ・ '+st+'</p></div></div>';
+  }).join("")+'</div>';
+  list.querySelectorAll(".cell").forEach(c=>c.onclick=()=>{ if(c.dataset.url){window.open(c.dataset.url,"_blank");} else {document.getElementById("cta").scrollIntoView({behavior:"smooth"});} });
+}
+render();
+</script>
