@@ -65,6 +65,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
 .shotcap{font-size:11px;color:var(--sub);margin:0 0 12px;text-align:right;}
 @media(max-width:720px){ .tools2{grid-template-columns:1fr;} .hero h2{font-size:21px;} }
 .floatcta{position:fixed;right:22px;bottom:22px;z-index:9999;background:linear-gradient(135deg,#ff9d3d,#f5661f);color:#fff;text-decoration:none;font-weight:900;font-size:15.5px;padding:15px 24px;border-radius:44px;box-shadow:0 8px 24px rgba(245,102,31,.5);display:inline-flex;align-items:center;gap:8px;animation:ctapulse 2.2s ease-in-out infinite;transition:transform .15s;}.floatcta:hover{transform:translateY(-2px);}@keyframes ctapulse{0%,100%{box-shadow:0 8px 24px rgba(245,102,31,.5);}50%{box-shadow:0 8px 30px rgba(245,102,31,.85),0 0 0 6px rgba(245,102,31,.12);}}@media(max-width:720px){.floatcta{left:12px;right:12px;bottom:12px;justify-content:center;padding:16px;font-size:16px;}}
+.pchint{display:none;}@media(max-width:720px){.pchint{display:block;font-size:11.5px;color:var(--prob);font-weight:700;margin:7px 0 0;}}
 </style>
 
 <a class="floatcta" href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" aria-label="困りごとを相談する">✉ 困りごとを相談する</a>
@@ -111,6 +112,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
       <p class="shotcap">▲ 実際の出力画面（全建統一様式・25種類を自動作成）</p>
       <div class="tname">施工体制ナビ<span class="c">施工体制台帳</span></div>
       <a class="btn" href="sekou/" target="_blank">▶ デモを触ってみる</a>
+      <div class="pchint">📱 スマホでは表示が崩れる場合があります。PCでのご利用を推奨します。</div>
       <div class="tut">チュートリアル付き ・ <b style="color:var(--blue)">御社用に作れます</b></div>
     </div>
     <div class="tool">
@@ -121,6 +123,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
       <p class="shotcap">▲ 実際の画面（担当者×工事をガントで見える化）</p>
       <div class="tname">人員配置表<span class="c">人員・労務</span></div>
       <a class="btn" href="jinin/" target="_blank">▶ デモを触ってみる</a>
+      <div class="pchint">📱 スマホでは表示が崩れる場合があります。PCでのご利用を推奨します。</div>
       <div class="tut">チュートリアル付き ・ <b style="color:var(--blue)">御社用に作れます</b></div>
     </div>
   </div>
@@ -143,6 +146,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" style="display:inline-block;background:#fff;color:var(--blue2);text-decoration:none;font-weight:900;padding:14px 36px;border-radius:10px;margin:0 0 14px;">✉ ご相談・お問い合わせはこちら</a>
     <span class="pill">✉ mb-dx@marubeni-co.jp</span>
     <span class="pill">🏢 どぼフェス ブースにて</span>
+    <div style="margin-top:16px;">
+      <button type="button" onclick="location.href='mailto:?subject='+encodeURIComponent('現場DX ツールポータル')+'&amp;body='+encodeURIComponent('PCでゆっくりご覧いただけます。\n\n'+location.href)" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">📧 このページをメールで送る（PCで見る用）</button>
+      <p style="margin:8px 0 0;font-size:11px;color:#dbe6ff;">スマホでご覧の方は、ご自身宛にURLを送っておくとPCで開けます。</p>
+    </div>
   </div>
   <p class="note">※ サービス名・連絡先は仮／デモの公開URLは準備中。</p>
 </div>
