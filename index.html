@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>現場DX ツールポータル</title>
+
+<!-- ▼▼▼ Googleアナリティクス(GA4) ▼▼▼ -->
+<!-- ここの G-XXXXXXXXXX を、あなたのGA4「測定ID」に書き換えるだけ（1か所だけでOK） -->
+<script>window.GA_ID = 'G-XXXXXXXXXX';</script>
+<script>
+  (function(){
+    if(!GA_ID || GA_ID.indexOf('G-XXXX')===0) return; // IDが未設定のうちは計測しない
+    var s=document.createElement('script');
+    s.async=true; s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){dataLayer.push(arguments);};
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  })();
+  // どこからでも安全に呼べる計測ヘルパー
+  function track(name, params){ if(window.gtag){ try{ gtag('event', name, params||{}); }catch(e){} } }
+</script>
+<!-- ▲▲▲ Googleアナリティクス ここまで ▲▲▲ -->
+
 <style>
 :root{
   --bg:#f4f6fb;--card:#ffffff;--ink:#1f2733;--sub:#6b7686;--line:#e6eaf1;
@@ -74,7 +94,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
 </style>
 </head>
 <body>
-<a class="floatcta" href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" aria-label="困りごとを相談する">✉ 困りごとを相談する</a>
+<a class="floatcta" href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" aria-label="困りごとを相談する" onclick="track('consult_click',{place:'追従ボタン'})">✉ 困りごとを相談する</a>
 
 <div class="top">
   <div class="in">
@@ -149,11 +169,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
       <span class="pill">✔ どんな“面倒”も改善</span>
     </div>
     <p style="font-size:16px;font-weight:800;color:#fff;margin:0 0 14px;">まずは一度、ご相談ください。</p>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" style="display:inline-block;background:#fff;color:var(--blue2);text-decoration:none;font-weight:900;padding:14px 36px;border-radius:10px;margin:0 0 14px;">✉ ご相談・お問い合わせはこちら</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfUdxXqubPKb7eOs_6Tsa967T-_KXzgiog_BtAsxPUORGeBrw/viewform" target="_blank" rel="noopener" onclick="track('consult_click',{place:'下部ボタン'})" style="display:inline-block;background:#fff;color:var(--blue2);text-decoration:none;font-weight:900;padding:14px 36px;border-radius:10px;margin:0 0 14px;">✉ ご相談・お問い合わせはこちら</a>
     <span class="pill">✉ mb-dx@marubeni-co.jp</span>
     <span class="pill">🏢 どぼフェス ブースにて</span>
     <div style="margin-top:16px;">
-      <button type="button" onclick="location.href='mailto:?subject='+encodeURIComponent('現場DX ツールポータル')+'&amp;body='+encodeURIComponent('PCでゆっくりご覧いただけます。\n\n'+location.href)" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">📧 このページをメールで送る（PCで見る用）</button>
+      <button type="button" onclick="track('email_share');location.href='mailto:?subject='+encodeURIComponent('現場DX ツールポータル')+'&amp;body='+encodeURIComponent('PCでゆっくりご覧いただけます。\n\n'+location.href)" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">📧 このページをメールで送る（PCで見る用）</button>
       <p style="margin:8px 0 0;font-size:11px;color:#dbe6ff;">スマホでご覧の方は、ご自身宛にURLを送っておくとPCで開けます。</p>
     </div>
   </div>
@@ -181,7 +201,7 @@ const CATS=["すべて","施工管理","人員・労務","経理","安全","そ�
 let cat="すべて",q="";
 const chipsEl=document.getElementById("chips");
 CATS.forEach(c=>{const b=document.createElement("button");b.className="chip"+(c===cat?" on":"");b.textContent=c;
-  b.onclick=()=>{cat=c;[...chipsEl.children].forEach(x=>x.classList.toggle("on",x.textContent===c));render();};chipsEl.appendChild(b);});
+  b.onclick=()=>{cat=c;track('filter_category',{category:c});[...chipsEl.children].forEach(x=>x.classList.toggle("on",x.textContent===c));render();};chipsEl.appendChild(b);});
 document.getElementById("q").addEventListener("input",e=>{q=e.target.value.trim();render();});
 function render(){
   const list=document.getElementById("list");
@@ -189,9 +209,13 @@ function render(){
   if(!s.length){list.innerHTML='<p class="empty">該当なし。まずはご相談ください。</p>';return;}
   list.innerHTML='<div class="grid">'+s.map(t=>{
     const st=t.real?('<span style="color:var(--sol);font-weight:800">✔ 自社で運用中</span>'+(t.url?' <span style="color:var(--blue);font-weight:800">▶ 触れる</span>':'')):'<span style="color:var(--lav);font-weight:800">🛠 御社に作れます</span>';
-    return '<div class="cell" data-url="'+(t.url||'')+'"><div class="cico">'+t.ico+'</div><div><p class="cn">'+t.name+'</p><p class="cc">'+t.cat+' ・ '+st+'</p></div></div>';
+    return '<div class="cell" data-url="'+(t.url||'')+'" data-name="'+t.name+'" data-real="'+(t.real?'1':'0')+'"><div class="cico">'+t.ico+'</div><div><p class="cn">'+t.name+'</p><p class="cc">'+t.cat+' ・ '+st+'</p></div></div>';
   }).join("")+'</div>';
-  list.querySelectorAll(".cell").forEach(c=>c.onclick=()=>{ if(c.dataset.url){window.open(c.dataset.url,"_blank");} else {document.getElementById("cta").scrollIntoView({behavior:"smooth"});} });
+  list.querySelectorAll(".cell").forEach(c=>c.onclick=()=>{
+    var nm=c.dataset.name||'', ty=(c.dataset.real==='1')?'運用中':'作れる例';
+    if(c.dataset.url){ track('tool_open',{tool_name:nm, tool_type:ty}); window.open(c.dataset.url,"_blank"); }
+    else { track('tool_interest',{tool_name:nm, tool_type:ty}); document.getElementById("cta").scrollIntoView({behavior:"smooth"}); }
+  });
 }
 render();
 </script>
