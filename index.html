@@ -91,6 +91,27 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
 @media(max-width:720px){ .tools2{grid-template-columns:1fr;} .hero h2{font-size:21px;} }
 .floatcta{position:fixed;right:22px;bottom:22px;z-index:9999;background:linear-gradient(135deg,#ff9d3d,#f5661f);color:#fff;text-decoration:none;font-weight:900;font-size:15.5px;padding:15px 24px;border-radius:44px;box-shadow:0 8px 24px rgba(245,102,31,.5);display:inline-flex;align-items:center;gap:8px;animation:ctapulse 2.2s ease-in-out infinite;transition:transform .15s;}.floatcta:hover{transform:translateY(-2px);}@keyframes ctapulse{0%,100%{box-shadow:0 8px 24px rgba(245,102,31,.5);}50%{box-shadow:0 8px 30px rgba(245,102,31,.85),0 0 0 6px rgba(245,102,31,.12);}}@media(max-width:720px){.floatcta{left:12px;right:12px;bottom:12px;justify-content:center;padding:16px;font-size:16px;}}
 .pchint{display:none;}@media(max-width:720px){.pchint{display:block;font-size:11.5px;color:var(--prob);font-weight:700;margin:7px 0 0;}}
+/* 導入の流れ・費用・Q&A */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+@media(max-width:720px){
+  .flow{grid-template-columns:1fr;gap:8px;}
+  .step{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:3px;padding:11px 14px;}
+  .step .n{order:0;margin-bottom:0;width:24px;height:24px;font-size:12px;}
+  .step h4{order:1;flex:1;margin:0;}
+  .step .term{order:2;margin-top:0;}
+  .step .desc{order:3;flex-basis:100%;margin:0;}
+}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}
+.step .n{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;margin-bottom:9px;}
+.step h4{margin:0 0 4px;font-size:13.5px;font-weight:900;}
+.step .desc{margin:0;font-size:11.5px;color:var(--sub);line-height:1.5;}
+.step .term{display:inline-block;margin-top:9px;background:var(--iconbg);color:var(--blue2);font-size:10.5px;font-weight:800;border-radius:12px;padding:2px 9px;}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:0 14px;}
+.faq summary{cursor:pointer;font-size:13px;font-weight:800;padding:12px 0;list-style:none;color:var(--ink);}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::before{content:"Q ";color:var(--blue);font-weight:900;}
+.faq details[open] summary{border-bottom:1px solid var(--line);}
+.faq .a{margin:12px 0;font-size:12.5px;color:var(--sub);line-height:1.6;}
 </style>
 </head>
 <body>
@@ -161,6 +182,32 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
   </div>
   <div id="list"></div>
 
+  <!-- ▼ 導入の流れ・費用/期間・Q&A（相談ハードルを下げる） ▼ -->
+  <p class="st" style="margin:30px 0 4px;">ご相談から導入までの流れ</p>
+  <p style="font-size:13px;color:var(--sub);margin:0 0 16px;">「システムは高い・面倒」——そんなことはありません。<b style="color:var(--ink)">小さく試して、御社に合うと分かってから</b>進められます。</p>
+  <div class="flow">
+    <div class="step"><div class="n">1</div><h4>ご相談・ヒアリング</h4><p class="desc">現場の困りごとをお聞きします</p><span class="term">〜1週間</span></div>
+    <div class="step"><div class="n">2</div><h4>お試し・デモ調整</h4><p class="desc">実際に触ってイメージを確認</p><span class="term">2〜4週間</span></div>
+    <div class="step"><div class="n">3</div><h4>ご提案・お見積り</h4><p class="desc">費用と進め方をご提示</p><span class="term">随時</span></div>
+    <div class="step"><div class="n">4</div><h4>開発・カスタマイズ</h4><p class="desc">御社に合わせて作ります</p><span class="term">1〜2ヶ月</span></div>
+    <div class="step"><div class="n">5</div><h4>運用開始・サポート</h4><p class="desc">導入後も継続してフォロー</p><span class="term">継続</span></div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#fff7e6,#fffdf6);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:16px;">
+    <p style="margin:0 0 6px;font-size:14px;font-weight:900;color:var(--navy);">💰 費用・期間の目安</p>
+    <p style="margin:0;font-size:12.5px;color:var(--navy);line-height:1.7;">業務の規模によりますが、<b>一番面倒な業務ひとつ</b>から小さく始められます。<br>目安：最短◯週間〜で試用開始／初期費用 ◯◯万円〜（<b>※金額・期間は仮。確定後に差し替え</b>）</p>
+  </div>
+
+  <p class="st" style="margin:28px 0 10px;">よくあるご質問</p>
+  <div class="faq">
+    <details><summary>費用はどれくらいかかりますか？</summary><p class="a">業務の規模で変わります。いきなり大きな投資は不要で、小さな業務ひとつから試せます。正確な金額はヒアリング後にお見積りします。</p></details>
+    <details><summary>どれくらいの期間で使えるようになりますか？</summary><p class="a">標準で◯ヶ月ほど（※仮）。まずはお試しから始めれば、早い段階で「使えそうか」を判断できます。</p></details>
+    <details><summary>今使っているExcelは無駄になりますか？</summary><p class="a">いいえ。今のExcelや帳票を活かして移行できます。ゼロから作り直す必要はありません。</p></details>
+    <details><summary>ITに詳しくないのですが大丈夫ですか？</summary><p class="a">大丈夫です。現場目線で作り、導入後の運用サポートもあります。</p></details>
+    <details><summary>小さな業務ひとつだけでも頼めますか？</summary><p class="a">もちろんです。むしろ「一番面倒な業務ひとつ」から始めるのがおすすめです。</p></details>
+  </div>
+  <!-- ▲ 導入の流れ ここまで ▲ -->
+
   <div class="foot" id="cta">
     <h2>御社に合わせたツール、作れます。</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 14px;">
@@ -173,8 +220,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Hir
     <span class="pill">✉ mb-dx@marubeni-co.jp</span>
     <span class="pill">🏢 どぼフェス ブースにて</span>
     <div style="margin-top:16px;">
-      <button type="button" onclick="track('email_share');location.href='mailto:?subject='+encodeURIComponent('現場DX ツールポータル')+'&amp;body='+encodeURIComponent('PCでゆっくりご覧いただけます。\n\n'+location.href)" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">📧 このページをメールで送る（PCで見る用）</button>
-      <p style="margin:8px 0 0;font-size:11px;color:#dbe6ff;">スマホでご覧の方は、ご自身宛にURLを送っておくとPCで開けます。</p>
+      <button type="button" onclick="track('email_share');location.href='mailto:?subject='+encodeURIComponent('【丸紅】現場DXツール集｜施工体制台帳が3時間→30分')+'&amp;body='+encodeURIComponent('現場の“面倒”を、自分たちで作ったツールで解決しています。\n丸紅（島田）が実際に社内で使っている現場DXツール集です。\n\n■ たとえば、こんなことができます\n・施工体制台帳の作成：3時間 → 30分\n・人員配置／工事の進捗をクラウドで見える化\n・今使っているExcel業務も、御社に合わせてシステム化できます\n\n■ 実際に触れます（PCでの閲覧がおすすめ）\n'+location.href+'\n\n気になる業務があれば、ページ内の「ご相談」ボタンからそのままお問い合わせいただけます。')" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:9px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;">📧 このページを自分宛てにメール（PCでじっくり見る）</button>
+      <p style="margin:8px 0 0;font-size:11px;color:#dbe6ff;">→ 後でPC・会社のPCでゆっくり見返す／同僚に共有するのに便利です。</p>
     </div>
   </div>
   <p class="note">※ サービス名・連絡先は仮／デモの公開URLは準備中。</p>
