@@ -143,7 +143,7 @@ section{padding:42px 0;border-bottom:1px solid var(--line);}
   <div class="wrap">
     <div class="kick">丸紅（島田）の、現場発ツール</div>
     <h1>その“面倒”、<br><span class="u">ぜんぶツール</span>にできます。</h1>
-    <p>自分たちで作って使っている現場DXを、<b>実際に触って</b>確かめてください。</p>
+    <p>どれも、自分たちで作って現場で使っているツールです。<b>実際に触って</b>確かめてください。</p>
     <div class="scroll">▼ 下で、動くデモを触れます</div>
     <div class="stats">
       <div><div class="num">月額 0円</div><div class="lbl">ランニングコストなし</div></div>
@@ -188,14 +188,13 @@ section{padding:42px 0;border-bottom:1px solid var(--line);}
   </section>
 
   <section>
-    <h2 class="sec">こんな業務も、ツールにできます</h2>
-    <p class="sec-sub">気になるものがあれば、ページ下の「ご相談」からお問い合わせください。</p>
+    <h2 class="sec">御社に、こんなツールが作れます</h2>
+    <p class="sec-sub">今の業務に合わせて、必要なものを一から。気になるものは、ページ下の「ご相談」からお気軽に。</p>
     <div class="controls">
       <div class="search"><input id="q" placeholder="キーワードで探す"></div>
       <div class="chips" id="chips"></div>
     </div>
     <div id="list"></div>
-    <p class="menu-note"><span class="use">✓ 使用中</span> ＝ 丸紅が実際に社内で使っているツール。<b>その他も、御社の業務に合わせて一から作れます。</b></p>
   </section>
 
   <section>
@@ -265,14 +264,11 @@ function render(){
   const s=MAKE.filter(t=>(cat==="すべて"||t.cat===cat)&&(!q||(t.name+t.cat).toLowerCase().includes(q.toLowerCase())));
   if(!s.length){list.innerHTML='<p class="empty">該当なし。まずはご相談ください。</p>';return;}
   list.innerHTML='<div class="grid">'+s.map(t=>{
-    let tag = t.real ? '<span class="use">✓ 使用中</span>' : '御社に作れます';
-    if(t.real && t.url) tag += ' ・ <span class="open">触れる ▶</span>';
-    return '<div class="cell" data-url="'+(t.url||'')+'" data-name="'+t.name+'" data-real="'+(t.real?'1':'0')+'"><div class="cn">'+t.name+'</div><div class="cc">'+t.cat+' ・ '+tag+'</div></div>';
+    return '<div class="cell" data-name="'+t.name+'"><div class="cn">'+t.name+'</div><div class="cc">'+t.cat+'</div></div>';
   }).join("")+'</div>';
   list.querySelectorAll(".cell").forEach(c=>c.onclick=()=>{
-    var nm=c.dataset.name||'', ty=(c.dataset.real==='1')?'運用中':'作れる例';
-    if(c.dataset.url){ track('tool_open',{tool_name:nm, tool_type:ty}); window.open(c.dataset.url,"_blank"); }
-    else { track('tool_interest',{tool_name:nm, tool_type:ty}); document.getElementById("cta").scrollIntoView({behavior:"smooth"}); }
+    track('tool_interest',{tool_name:c.dataset.name||''});
+    document.getElementById("cta").scrollIntoView({behavior:"smooth"});
   });
 }
 render();
