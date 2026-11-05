@@ -2157,12 +2157,12 @@ const _nowISO = new Date().toISOString();
 const _daysAgo = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
 const DEMO_KOJI = [
   { id:'k1', name:'A線道路改良工事', type:'公共（元）', number:'K-2026-021', status:'施工中',
-    client:'国土交通省', sales:'池田 玲', field:'佐藤 健一', companies:[],
+    client:'国土交通省', sales:'鈴木 大輔', field:'佐藤 健一', companies:[],
     createdAt:_daysAgo(40), statusChangedAt:_daysAgo(10),
     history:[
       { id:'m1', type:'memo', author:'佐藤 健一', authorId:'demo', createdAt:_daysAgo(2),
         text:'実行予算の提出待ち。経理に確認済み、今週中に届く予定。' },
-      { id:'a1', type:'auto', action:'doc_upload', author:'池田 玲', createdAt:_daysAgo(9),
+      { id:'a1', type:'auto', action:'doc_upload', author:'鈴木 大輔', createdAt:_daysAgo(9),
         text:'契約書をアップロード' }
     ] },
   { id:'k2', name:'B川護岸工事', type:'公共（下）', number:'K-2026-019', status:'施工中',
@@ -2170,13 +2170,13 @@ const DEMO_KOJI = [
     companies:[{ name:'□□建設株式会社' }],
     createdAt:_daysAgo(25), statusChangedAt:_daysAgo(3), history:[] },
   { id:'k3', name:'C橋梁補修工事', type:'民間', number:'K-2026-023', status:'受注',
-    client:'○○建設株式会社', sales:'池田 玲', field:'中村 三郎',
+    client:'○○建設株式会社', sales:'鈴木 大輔', field:'中村 三郎',
     companies:[], createdAt:_daysAgo(6), statusChangedAt:_daysAgo(6), history:[] },
   { id:'k4', name:'D地区下水道工事', type:'公共（元）', number:'K-2026-008', status:'完工',
     client:'○○市 上下水道局', sales:'山田 太郎', field:'佐藤 健一',
     companies:[], createdAt:_daysAgo(120), statusChangedAt:_daysAgo(15), history:[] },
   { id:'k5', name:'E団地給水管更新工事', type:'公共（元）', number:'K-2026-017', status:'施工中',
-    client:'○○県住宅供給公社', sales:'池田 玲', field:'田中 次郎',
+    client:'○○県住宅供給公社', sales:'鈴木 大輔', field:'田中 次郎',
     companies:[], createdAt:_daysAgo(30), statusChangedAt:_daysAgo(5), history:[] }
 ];
 
@@ -2393,10 +2393,10 @@ async function initialize() {
     // サンドボックス：認証・OneDriveを飛ばして架空データで表示
     kojiList  = JSON.parse(JSON.stringify(DEMO_KOJI));
     docFiles  = JSON.parse(JSON.stringify(DEMO_DOCFILES));
-    staffList = { sales:['池田 玲','山田 太郎'], field:['佐藤 健一','田中 次郎','中村 三郎'], admins:['池田 玲'] };
-    currentUser = { name:'池田 玲（デモ）', username:'demo@example.com' };
+    staffList = { sales:['鈴木 大輔','山田 太郎'], field:['佐藤 健一','田中 次郎','中村 三郎'], admins:['鈴木 大輔'] };
+    currentUser = { name:'鈴木 大輔（デモ）', username:'demo@example.com' };
     staffAdminUnlocked = true;
-    document.getElementById('user-info').textContent = currentUser.name;
+    document.getElementById('user-info').textContent = '';
     renderList();
     renderStats();
     document.getElementById('loading-overlay').classList.add('hidden');
@@ -2697,7 +2697,7 @@ async function loadKojiList() {
         number: 'K-2026-013',
         status: '施工中',
         client: '○○建設株式会社',
-        sales: '池田 玲',
+        sales: '鈴木 大輔',
         field: '佐藤 健一',
         companies: [],
         createdAt: new Date().toISOString()
