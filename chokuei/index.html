@@ -1,0 +1,2190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>直営現場管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+input[type=date]{-webkit-appearance:none;appearance:none;}
+body{font-family:-apple-system,sans-serif;background:#F0F0F0;color:#111;}
+.header{background:#111;padding:16px 16px 14px;display:flex;align-items:center;justify-content:space-between;}
+.header-left{display:flex;align-items:center;gap:10px;}
+.header-title-block{display:flex;flex-direction:column;}
+.header h1{font-size:18px;font-weight:600;color:#fff;letter-spacing:-0.3px;}
+.header-sub{font-size:12px;color:#888;margin-top:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.gear-btn{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;opacity:0.85;}
+.gear-btn:hover{opacity:1;}
+.cal-btn{background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;opacity:0.85;}
+.cal-btn:hover{opacity:1;}
+.reg-btn{background:#06C755;color:#fff;border:none;border-radius:20px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;}
+/* マスタ管理ページ */
+.master-header{background:#111;padding:16px 16px 14px;display:flex;align-items:center;gap:12px;}
+.master-header .back{color:#fff;font-size:14px;cursor:pointer;opacity:0.9;}
+.master-header h1{color:#fff;font-size:18px;font-weight:600;}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #E0E0E0;}
+.tab{flex:1;padding:14px;font-size:14px;font-weight:600;color:#888;text-align:center;cursor:pointer;border-bottom:3px solid transparent;background:#fff;border-left:none;border-right:none;border-top:none;}
+.tab.active{color:#111;border-bottom-color:#06C755;}
+.master-list{padding:12px;background:#F0F0F0;min-height:300px;}
+.master-add-btn{width:100%;padding:12px;background:#fff;border:2px dashed #BBB;border-radius:12px;font-size:14px;font-weight:600;color:#666;cursor:pointer;margin-bottom:10px;}
+.master-item{background:#fff;border:1px solid #DDD;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.master-item-info{flex:1;min-width:0;}
+.master-item-name{font-size:16px;font-weight:600;color:#111;}
+.master-item-sub{font-size:12px;color:#888;margin-top:2px;}
+.master-item-btns{display:flex;gap:6px;flex-shrink:0;}
+.master-edit{font-size:12px;color:#666;background:#F5F5F5;border:none;border-radius:7px;padding:6px 11px;font-weight:600;cursor:pointer;}
+.master-del{font-size:12px;color:#E03B3B;background:#FEEEEE;border:none;border-radius:7px;padding:6px 11px;font-weight:600;cursor:pointer;}
+.master-empty{text-align:center;padding:40px 20px;color:#aaa;font-size:14px;}
+/* ログインモーダル */
+.login-modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;overflow-y:auto;}
+.login-modal{background:#fff;border-radius:16px;margin:80px 24px 24px;padding:24px 20px;}
+.login-modal h2{font-size:18px;font-weight:700;color:#111;text-align:center;margin-bottom:6px;}
+.login-modal .sub{font-size:13px;color:#888;text-align:center;margin-bottom:18px;}
+.login-modal input{width:100%;padding:13px 14px;border:1px solid #ddd;border-radius:10px;font-size:16px;background:#fff;color:#111;}
+.login-modal .err{font-size:13px;color:#E03B3B;margin-top:8px;min-height:18px;}
+.login-modal .btns{display:flex;gap:8px;margin-top:14px;}
+.login-modal .btns button{flex:1;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;border:none;}
+.login-cancel{background:#f5f5f5;color:#555;}
+.login-ok{background:#06C755;color:#fff;}
+.search-wrap{background:#fff;padding:10px 12px;border-left:0.5px solid #E0E0E0;border-right:0.5px solid #E0E0E0;}
+.search-wrap input{width:100%;padding:9px 12px;border:none;border-radius:10px;font-size:14px;background:#F5F5F5;color:#111;}
+.search-wrap input:focus{outline:none;}
+.count{font-size:13px;color:#888;padding:8px 14px 4px;background:#fff;border-left:0.5px solid #E0E0E0;border-right:0.5px solid #E0E0E0;}
+.list{padding:0 10px 10px;background:#fff;border-left:0.5px solid #E0E0E0;border-right:0.5px solid #E0E0E0;border-bottom:0.5px solid #E0E0E0;border-radius:0 0 14px 14px;}
+.card{background:#fff;border:2px solid #AAAAAA;border-radius:14px;padding:14px;margin-bottom:8px;}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.card-name-row{display:flex;align-items:center;gap:10px;}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.name{font-size:18px;font-weight:600;color:#111;letter-spacing:-0.3px;}
+.kantoku-tag{display:inline-block;font-size:12px;font-weight:600;border-radius:8px;padding:3px 10px;}
+.kantoku-tag.has{background:#E6F1FB;color:#0C447C;}
+.kantoku-tag.none{background:#EEEEEE;color:#888;}
+.slot-box{border-radius:10px;padding:10px 12px;margin-top:6px;background:#F8F8F8;}
+.slot-box.now-spot{background:#FFF3E0;border:2px solid #FF9800;}
+.slot-box.next{background:#FAFAFA;border:1px dashed #DDD;}
+.slot-box.upcoming{background:#FFF8E8;border:1px dashed #D4B26A;}
+.slot-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.slot-badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;letter-spacing:0.5px;}
+.slot-badge.now{color:#06A047;background:#E1F5EE;}
+.slot-badge.next{color:#888;background:#EEE;}
+.slot-badge.upcoming{color:#866216;background:#F4E2A8;}
+.slot-edit{font-size:11px;color:#666;background:#fff;border:1px solid #DDD;border-radius:6px;padding:3px 9px;font-weight:600;cursor:pointer;}
+.add-genba-btn{font-size:12px;color:#06A047;background:#E1F5EE;border:none;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;flex-shrink:0;}
+.extras-toggle{width:100%;margin-top:6px;padding:8px;background:#F5F5F5;border:none;border-radius:8px;font-size:12px;font-weight:600;color:#666;cursor:pointer;}
+.extras-toggle:hover{background:#EEE;}
+.slot-genba{font-size:14px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slot-meta{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
+.slot-koki{font-size:13px;color:#555;}
+.slot-box.next .slot-genba{font-size:13px;color:#555;}
+.slot-box.next .slot-koki{font-size:12px;color:#999;}
+.empty{text-align:center;padding:60px 20px;color:#bbb;font-size:15px;}
+.loading{text-align:center;padding:40px;color:#bbb;font-size:14px;}
+/* モーダル */
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:100;overflow-y:auto;}
+.modal{background:#fff;border-radius:16px;margin:60px 16px;padding:20px;}
+.modal h2{font-size:16px;font-weight:600;color:#111;margin-bottom:16px;}
+.modal label{font-size:12px;color:#555;font-weight:500;display:block;margin-bottom:4px;margin-top:12px;}
+.modal select,.modal input{width:100%;max-width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;}
+.modal input[type=date]{padding:10px 8px;font-size:14px;min-width:0;}
+.modal-row{display:flex;gap:8px;}
+.modal-row .mgroup{flex:1;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-btns button{flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none;}
+.cancel-btn{background:#f5f5f5;color:#555;}
+.save-btn{background:#06C755;color:#fff;}
+.kantoku-disp{font-size:13px;color:#0C447C;background:#E6F1FB;border-radius:8px;padding:8px 12px;margin-top:4px;min-height:36px;}
+.date-group{margin-top:12px;}
+.koki-preview{background:#E8F5E9;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.koki-preview-label{font-size:11px;font-weight:700;color:#2E7D32;letter-spacing:0.5px;}
+.koki-preview-days{font-size:14px;font-weight:700;color:#2E7D32;}
+.koki-preview.invalid{background:#FDECEC;}
+.koki-preview.invalid .koki-preview-label,.koki-preview.invalid .koki-preview-days{color:#C62828;}
+.del-from-modal-btn{width:100%;margin-top:10px;padding:10px;background:#fff;color:#E03B3B;border:1px solid #E03B3B;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.spot-add-btn{width:100%;margin-top:10px;padding:10px;background:#FFF3E0;color:#E65100;border:1px solid #FF9800;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+/* 登録フォーム */
+.page{display:none;}
+.page.active{display:block;}
+.reg-header{background:#06C755;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.back{color:#fff;font-size:14px;cursor:pointer;opacity:0.9;}
+.reg-header h1{color:#fff;font-size:17px;font-weight:600;}
+.form{padding:20px 16px 30px;}
+.group{margin-bottom:16px;}
+label{font-size:12px;color:#555;font-weight:500;display:block;margin-bottom:5px;}
+select,input[type=date]{width:100%;max-width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;min-width:0;}
+input[type=date]{padding:11px 8px;font-size:14px;}
+.kantoku-disp-reg{font-size:14px;color:#0C447C;background:#E6F1FB;border-radius:10px;padding:10px 12px;min-height:42px;display:flex;align-items:center;}
+.genba-input{width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;margin-top:8px;display:none;}
+.row{display:flex;gap:10px;}
+.row .group{flex:1;}
+.btn{width:100%;padding:14px;background:#06C755;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:6px;}
+.btn:disabled{background:#ccc;}
+.success{display:none;text-align:center;padding:40px 20px;}
+.check{width:56px;height:56px;background:#E8F5E9;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px;color:#2E7D32;}
+.s-title{font-size:17px;font-weight:600;color:#111;margin-bottom:8px;}
+.s-sub{font-size:14px;color:#777;line-height:1.7;}
+.back-btn{margin-top:20px;width:100%;padding:12px;background:#fff;border:1px solid #ddd;border-radius:12px;font-size:15px;color:#555;cursor:pointer;}
+/* オーバーレイ */
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.overlay.show{display:flex;}
+.spinner{width:36px;height:36px;border:3px solid #ddd;border-top-color:#06C755;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.overlay-msg{font-size:14px;color:#555;}
+/* 削除確認 */
+.del-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:299;}
+.del-overlay.show{display:block;}
+.del-modal{display:none;position:fixed;bottom:0;left:0;width:100%;z-index:300;padding:16px;}
+.del-modal.show{display:block;}
+.del-inner{background:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.15);}
+.del-title{font-size:16px;font-weight:600;color:#111;margin-bottom:6px;}
+.del-sub{font-size:13px;color:#888;margin-bottom:16px;}
+.del-btns{display:flex;gap:8px;}
+.del-btns button{flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;border:none;cursor:pointer;}
+.del-cancel{background:#f5f5f5;color:#555;}
+.del-confirm{background:#FF3B30;color:#fff;}
+/* カレンダー */
+.cal-header{background:#111;padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.cal-header .back{color:#fff;font-size:14px;cursor:pointer;opacity:0.9;}
+.cal-header h1{color:#fff;font-size:17px;font-weight:600;flex:1;}
+.cal-header .filter-btn{font-size:11px;color:#fff;background:transparent;border:1px solid #555;border-radius:8px;padding:5px 10px;cursor:pointer;}
+.cal-nav{background:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #EEE;}
+.cal-nav-btn{font-size:12px;background:#F5F5F5;border:none;border-radius:8px;padding:6px 10px;color:#555;font-weight:600;cursor:pointer;}
+.cal-nav-range{font-size:13px;font-weight:700;color:#111;}
+.cal-table-wrap{background:#fff;overflow-x:auto;}
+.cal-table{font-size:11px;border-collapse:collapse;width:100%;min-width:480px;border:1px solid #CCC;}
+.cal-table th,.cal-table td{border:1px solid #CCC;padding:6px 2px;text-align:center;vertical-align:middle;}
+.cal-table thead th{background:#F8F8F8;font-weight:600;color:#888;font-size:10px;position:sticky;top:0;}
+.cal-table thead th.today{background:#EAF1FB;color:#1d6fd9;}
+.cal-table thead th .day-of-week{font-size:9px;color:#888;font-weight:400;display:block;}
+.cal-table thead th.today .day-of-week{color:#1d6fd9;}
+.cal-table thead th.weekend{color:#bbb;}
+.cal-table thead th.weekend .day-of-week{color:#bbb;}
+.cal-table tbody td.name-col{background:#F8F8F8;font-weight:600;font-size:11px;color:#111;text-align:left;padding:8px 6px;position:sticky;left:0;z-index:1;min-width:54px;}
+.cal-table tbody td.weekend{background:#F5F5F5;}
+.cal-cell{cursor:pointer;font-size:10px;padding:8px 2px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;}
+.cal-cell:hover{filter:brightness(0.96);}
+.cal-cell.cal-spot{background:#FFF3E0;color:#E65100;font-weight:700;border:2px solid #FF9800 !important;position:relative;}
+.cal-cell.cal-spot::before{content:'⚡';position:absolute;top:1px;left:2px;font-size:9px;}
+.cal-empty-cell{cursor:pointer;}
+.cal-empty-cell:hover{background:#F0F8FF !important;}
+.cal-empty{padding:60px 20px;text-align:center;color:#bbb;font-size:14px;}
+/* 表示する人を選ぶモーダル */
+.filter-modal-list{max-height:60vh;overflow-y:auto;border:1px solid #EEE;border-radius:8px;margin-bottom:10px;}
+.filter-modal-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #EEE;cursor:pointer;}
+.filter-modal-item:last-child{border-bottom:none;}
+.filter-modal-item input{width:18px;height:18px;cursor:pointer;}
+.filter-modal-item label{font-size:14px;cursor:pointer;flex:1;color:#111;font-weight:500;margin:0;}
+.filter-modal-actions{display:flex;gap:8px;margin-bottom:10px;}
+.filter-modal-actions button{flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #DDD;background:#fff;color:#555;cursor:pointer;}
+
+/* ===== 下ナビ＋レスポンシブ（2026-10-15 追加・外側のみ） ===== */
+.pc-tools{display:none;align-items:center;gap:8px;}
+.bottomnav{position:fixed;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #E6E6E6;display:none;align-items:center;justify-content:space-between;padding:0 46px;z-index:90;box-shadow:0 -3px 16px rgba(0,0,0,0.06);}
+.bottomnav.show{display:flex;}
+.bottomnav .bn-side{display:flex;flex-direction:column;align-items:center;gap:3px;background:transparent;border:none;cursor:pointer;color:#888;font-size:10.5px;font-weight:700;width:60px;}
+.bottomnav .bn-side svg{width:25px;height:25px;}
+.bottomnav .bn-fab{display:flex;flex-direction:column;align-items:center;}
+.bottomnav .bn-fab button{width:58px;height:58px;border-radius:50%;background:#06C755;border:none;color:#fff;font-size:30px;font-weight:300;line-height:1;margin-top:-24px;box-shadow:0 7px 18px rgba(6,199,85,0.45);cursor:pointer;}
+.bottomnav .bn-fab .bn-lbl{font-size:10.5px;font-weight:800;color:#06A047;margin-top:2px;}
+body.has-bottomnav #page-calendar .cal-table-wrap,body.has-bottomnav #page-list .list{padding-bottom:84px;}
+@media(min-width:900px){
+  .bottomnav{display:none !important;}
+  body.has-bottomnav #page-calendar .cal-table-wrap,body.has-bottomnav #page-list .list{padding-bottom:16px;}
+  .pc-tools{display:flex;}
+  .cal-table{min-width:0;}
+  .cal-table-wrap{overflow-x:visible;}
+  .search-wrap,.count,.list,.cal-nav,.cal-table-wrap,.master-list,.form,.cal-header-sub{max-width:1100px;margin-left:auto;margin-right:auto;}
+  .reg-header,.master-header{max-width:1100px;margin-left:auto;margin-right:auto;}
+}
+/* ===== ハマったスクロール：スマホのみ上下固定・中身だけスクロール。PCは自然スクロール（2026-10-15） ===== */
+@media(max-width:899px){
+  #page-calendar.active{position:fixed;inset:0;display:flex;flex-direction:column;background:#F0F0F0;z-index:1;}
+  #page-calendar .header,#page-calendar .cal-header-sub,#page-calendar .cal-nav{flex:none;}
+  #page-calendar > div[style*="text-align:center"]{flex:none;} /* 「今週に戻る」行 */
+  #page-calendar .cal-table-wrap{flex:1 1 auto;min-height:0;overflow:auto;}
+}
+</style>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="overlay-msg" id="overlay-msg">読み込み中...</div>
+</div>
+
+<!-- ===== 一覧ページ ===== -->
+<div class="page" id="page-list">
+  <div class="header">
+    <div class="header-left">
+      <a href="https://marubeni-shimada.github.io/dx-portal/" style="display:inline-flex;align-items:center;gap:4px;background:#0c1d46;color:#fff;text-decoration:none;font-weight:700;font-size:12px;border-radius:7px;padding:7px 11px;margin-right:10px;white-space:nowrap" title="ツールポータルに戻る">← ポータル</a>
+      <div class="header-title-block">
+        <h1>直営現場一覧</h1>
+        <div class="header-sub" id="header-sub"></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="pc-tools">
+        <button class="cal-btn" onclick="showCalendar()" title="カレンダー">📅</button>
+        <button class="reg-btn" onclick="showRegister()">＋ 登録</button>
+        <button class="gear-btn" onclick="showMaster()" title="マスタ管理" aria-label="マスタ管理">⚙</button>
+      </div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="名前・現場・監督で検索" oninput="render()">
+  </div>
+  <div class="count" id="count"></div>
+  <div class="list" id="list"><div class="loading">読み込み中...</div></div>
+</div>
+
+<!-- ===== 登録ページ ===== -->
+<div class="page" id="page-register">
+  <div class="reg-header">
+    <span class="back" onclick="returnFromRegister()">← 戻る</span>
+    <h1>現場登録</h1>
+  </div>
+  <div class="form" id="reg-form">
+    <div class="group">
+      <label>作業員名</label>
+      <select id="sel-worker"><option value="">選択してください</option></select>
+    </div>
+    <div class="group">
+      <label>現場名</label>
+      <select id="sel-genba" onchange="onRegGenbaChange()"><option value="">選択してください</option></select>
+      <input type="text" class="genba-input" id="inp-genba-free" placeholder="現場名を入力してください">
+    </div>
+    <div class="group" id="reg-kantoku-group">
+      <label>監督名</label>
+      <div class="kantoku-disp-reg" id="reg-kantoku-disp">現場を選ぶと自動表示されます</div>
+      <input type="hidden" id="reg-kantoku">
+    </div>
+    <div class="group" id="reg-kantoku-free-group" style="display:none;">
+      <label>監督名</label>
+      <select id="reg-kantoku-free-select" onchange="onRegKantokuFreeChange()"></select>
+      <input type="text" id="reg-kantoku-free-input" placeholder="監督名を入力" style="display:none;width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;margin-top:8px;">
+    </div>
+    <div class="group">
+      <label>開始日</label>
+      <input type="date" id="inp-start" onchange="updateRegKoki()">
+    </div>
+    <div class="group">
+      <label>終了予定日</label>
+      <input type="date" id="inp-end" onchange="updateRegKoki()">
+    </div>
+    <div class="koki-preview" id="reg-koki-preview" style="display:none;margin-bottom:10px;">
+      <span class="koki-preview-label">期間</span>
+      <span class="koki-preview-days" id="reg-koki-days">—</span>
+    </div>
+    <button class="btn" id="reg-btn-submit" onclick="submitRegister()">登録する</button>
+  </div>
+  <div class="success" id="reg-success">
+    <div class="check">✓</div>
+    <div class="s-title">登録しました</div>
+    <div class="s-sub" id="reg-success-msg"></div>
+    <button class="back-btn" onclick="resetRegister()">続けて登録する</button>
+    <button class="back-btn" style="margin-top:8px;" onclick="returnFromRegister()">戻る</button>
+  </div>
+</div>
+
+<!-- ===== カレンダーページ ===== -->
+<div class="page active" id="page-calendar">
+  <div class="header">
+    <div class="header-left">
+      <a href="https://marubeni-shimada.github.io/dx-portal/" style="display:inline-flex;align-items:center;gap:4px;background:#0c1d46;color:#fff;text-decoration:none;font-weight:700;font-size:12px;border-radius:7px;padding:7px 11px;margin-right:10px;white-space:nowrap" title="ツールポータルに戻る">← ポータル</a>
+      <div class="header-title-block">
+        <h1>カレンダー</h1>
+        <div class="header-sub" id="cal-header-sub"></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="pc-tools">
+        <button class="reg-btn" onclick="showRegister()">＋ 登録</button>
+        <button class="gear-btn" onclick="showMaster()" title="マスタ管理" aria-label="マスタ管理">⚙</button>
+      </div>
+    </div>
+  </div>
+  <div class="cal-header-sub" style="background:#fff;padding:8px 12px;display:flex;justify-content:flex-end;border-bottom:1px solid #EEE;">
+    <button class="filter-btn" onclick="openFilterModal()" style="font-size:12px;color:#555;background:#F5F5F5;border:1px solid #DDD;border-radius:8px;padding:6px 12px;cursor:pointer;">表示する人 ▾</button>
+  </div>
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calShiftWeek(-1)">← 先週</button>
+    <div class="cal-nav-range" id="cal-range">—</div>
+    <button class="cal-nav-btn" onclick="calShiftWeek(1)">来週 →</button>
+  </div>
+  <div style="background:#fff;padding:6px 12px 10px;text-align:center;">
+    <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:11px;padding:4px 12px;">今週に戻る</button>
+  </div>
+  <div class="cal-table-wrap">
+    <div id="cal-content"><div class="cal-empty">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- ===== 表示する人を選ぶモーダル ===== -->
+<div class="modal-bg" id="filter-modal-bg">
+  <div class="modal">
+    <h2>表示する人を選ぶ</h2>
+    <div class="filter-modal-actions">
+      <button onclick="filterSelectAll()">すべて選択</button>
+      <button onclick="filterSelectNone()">すべて解除</button>
+    </div>
+    <div class="filter-modal-list" id="filter-modal-list"></div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeFilterModal()">キャンセル</button>
+      <button class="save-btn" onclick="applyFilter()">適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== マスタ管理ページ ===== -->
+<div class="page" id="page-master">
+  <div class="master-header">
+    <span class="back" onclick="showCalendar()">← カレンダー</span>
+    <h1>マスタ管理</h1>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-genba" onclick="switchTab('genba')">現場</button>
+    <button class="tab" id="tab-kantoku" onclick="switchTab('kantoku')">監督</button>
+    <button class="tab" id="tab-worker" onclick="switchTab('worker')">作業員</button>
+  </div>
+  <div class="master-list" id="master-list"></div>
+</div>
+
+<!-- ===== ログインモーダル ===== -->
+<div class="login-modal-bg" id="login-modal-bg">
+  <div class="login-modal">
+    <h2>🔒 マスタ管理</h2>
+    <div class="sub">パスワードを入力してください</div>
+    <input type="password" id="login-password" placeholder="パスワード" autocomplete="off">
+    <div class="err" id="login-err"></div>
+    <div class="btns">
+      <button class="login-cancel" onclick="closeLoginModal()">キャンセル</button>
+      <button class="login-ok" onclick="submitLogin()">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== マスタ編集モーダル（現場） ===== -->
+<div class="modal-bg" id="genba-modal-bg">
+  <div class="modal">
+    <h2 id="genba-modal-title">現場を追加</h2>
+    <input type="hidden" id="genba-edit-row">
+    <label>現場名</label>
+    <input type="text" id="genba-input-name" placeholder="例：渋谷区神南ビル新築工事">
+    <label>監督名</label>
+    <div id="genba-kantoku-rows"></div>
+    <button type="button" id="genba-kantoku-add-btn" onclick="addGenbaKantokuRow()" style="width:100%;padding:8px;background:#F5F5F5;border:1px dashed #BBB;border-radius:8px;font-size:12px;font-weight:600;color:#666;cursor:pointer;margin-top:6px;">＋ 監督を追加</button>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeGenbaModal()">キャンセル</button>
+      <button class="save-btn" onclick="saveGenba()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== マスタ編集モーダル（作業員） ===== -->
+<div class="modal-bg" id="worker-modal-bg">
+  <div class="modal">
+    <h2 id="worker-modal-title">作業員を追加</h2>
+    <input type="hidden" id="worker-edit-row">
+    <label>作業員名</label>
+    <input type="text" id="worker-input-name" placeholder="例：田中 浩二">
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeWorkerModal()">キャンセル</button>
+      <button class="save-btn" onclick="saveWorker()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 作業員に現場を追加するモーダル ===== -->
+<div class="modal-bg" id="add-genba-modal-bg">
+  <div class="modal">
+    <div style="font-size:12px;color:#888;margin-bottom:4px;" id="add-genba-modal-subtitle"></div>
+    <h2 style="margin-bottom:14px;">次の現場を追加</h2>
+    <input type="hidden" id="add-genba-target-name">
+    <label>現場名</label>
+    <select id="add-genba-input-select" onchange="onAddGenbaChange()"><option value="">選択してください</option></select>
+    <input type="text" class="genba-input" id="add-genba-input-free" placeholder="現場名を入力してください">
+    <div id="add-genba-kantoku-group">
+      <label>監督名</label>
+      <div class="kantoku-disp" id="add-genba-kantoku-disp">現場を選ぶと自動表示されます</div>
+      <input type="hidden" id="add-genba-kantoku">
+    </div>
+    <div id="add-genba-kantoku-free-group" style="display:none;">
+      <label>監督名</label>
+      <select id="add-genba-kantoku-free-select" onchange="onAddGenbaKantokuFreeChange()"></select>
+      <input type="text" id="add-genba-kantoku-free-input" placeholder="監督名を入力" style="display:none;width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;margin-top:8px;">
+    </div>
+    <div class="date-group">
+      <label>開始日</label>
+      <input type="date" id="add-genba-start" onchange="updateAddGenbaKoki()">
+    </div>
+    <div class="date-group">
+      <label>終了予定日</label>
+      <input type="date" id="add-genba-end" onchange="updateAddGenbaKoki()">
+    </div>
+    <div class="koki-preview" id="add-genba-koki-preview" style="display:none;">
+      <span class="koki-preview-label">期間</span>
+      <span class="koki-preview-days" id="add-genba-koki-days">—</span>
+    </div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeAddGenbaModal()">キャンセル</button>
+      <button class="save-btn" onclick="saveAddGenba()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== スポット追加・編集モーダル ===== -->
+<div class="modal-bg" id="spot-modal-bg">
+  <div class="modal">
+    <div style="font-size:12px;color:#888;margin-bottom:4px;" id="spot-modal-subtitle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+      <h2 style="margin:0;" id="spot-modal-title">⚡ スポットを追加</h2>
+      <span id="spot-registrant-label" style="font-size:11px;color:#666;"></span>
+    </div>
+    <input type="hidden" id="spot-edit-row">
+    <input type="hidden" id="spot-base-row">
+    <input type="hidden" id="spot-worker-name">
+    <label>開始日</label>
+    <input type="date" id="spot-start" onchange="updateSpotKoki()">
+    <label>終了予定日</label>
+    <input type="date" id="spot-end" onchange="updateSpotKoki()">
+    <div class="koki-preview" id="spot-koki-preview" style="display:none;">
+      <span class="koki-preview-label">期間</span>
+      <span class="koki-preview-days" id="spot-koki-days">—</span>
+    </div>
+    <label>現場名</label>
+    <select id="spot-genba" onchange="onSpotGenbaChange()"><option value="">選択してください</option></select>
+    <input type="text" class="genba-input" id="spot-genba-free" placeholder="現場名を入力してください">
+    <div id="spot-kantoku-group">
+      <label>監督名</label>
+      <div class="kantoku-disp" id="spot-kantoku-disp">現場を選ぶと自動表示されます</div>
+      <input type="hidden" id="spot-kantoku">
+    </div>
+    <div id="spot-kantoku-free-group" style="display:none;">
+      <label>監督名</label>
+      <select id="spot-kantoku-free-select" onchange="onSpotKantokuFreeChange()"></select>
+      <input type="text" id="spot-kantoku-free-input" placeholder="監督名を入力" style="display:none;width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;margin-top:8px;">
+    </div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeSpotModal()">キャンセル</button>
+      <button class="save-btn" onclick="saveSpot()" id="spot-save-btn">追加する</button>
+    </div>
+    <button type="button" class="del-from-modal-btn" id="spot-delete-btn" onclick="deleteSpot()" style="display:none;">🗑 このスポットを削除</button>
+  </div>
+</div>
+
+<!-- ===== 編集モーダル ===== -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div id="edit-slot-badge-wrap" style="margin-bottom:6px;display:none;">
+      <span class="slot-badge" id="edit-slot-badge">今</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <h2 style="margin:0;">現場を編集</h2>
+      <span id="edit-registrant-label" style="font-size:11px;color:#666;"></span>
+    </div>
+    <input type="hidden" id="edit-row">
+    <label>作業員名</label>
+    <select id="edit-worker"></select>
+    <label>現場名</label>
+    <select id="edit-genba" onchange="onEditGenbaChange()"></select>
+    <input type="text" class="genba-input" id="edit-genba-free" placeholder="現場名を入力してください">
+    <div id="edit-kantoku-group">
+      <label>監督名</label>
+      <div class="kantoku-disp" id="edit-kantoku-disp">—</div>
+    </div>
+    <div id="edit-kantoku-free-group" style="display:none;">
+      <label>監督名</label>
+      <select id="edit-kantoku-free-select" onchange="onEditKantokuFreeChange()"></select>
+      <input type="text" id="edit-kantoku-free-input" placeholder="監督名を入力" style="display:none;width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#111;margin-top:8px;">
+    </div>
+    <input type="hidden" id="edit-kantoku">
+    <div class="date-group">
+      <label>開始日</label>
+      <input type="date" id="edit-start" onchange="updateEditKoki()">
+    </div>
+    <div class="date-group">
+      <label>終了予定日</label>
+      <input type="date" id="edit-end" onchange="updateEditKoki()">
+    </div>
+    <div class="koki-preview" id="edit-koki-preview" style="display:none;">
+      <span class="koki-preview-label">期間</span>
+      <span class="koki-preview-days" id="edit-koki-days">—</span>
+    </div>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeModal()">キャンセル</button>
+      <button class="save-btn" onclick="saveEdit()">保存</button>
+    </div>
+    <button type="button" class="spot-add-btn" onclick="openSpotFromEdit()">⚡ この期間内にスポットを追加</button>
+    <button class="del-from-modal-btn" onclick="delFromEdit()">🗑 この現場を削除</button>
+  </div>
+</div>
+
+<!-- ===== 削除確認 ===== -->
+<div class="del-overlay" id="del-overlay" onclick="closeDelModal()"></div>
+<div class="del-modal" id="del-modal">
+  <div class="del-inner">
+    <div class="del-title">削除しますか？</div>
+    <div class="del-sub">この操作は元に戻せません</div>
+    <div class="del-btns">
+      <button class="del-cancel" onclick="closeDelModal()">キャンセル</button>
+      <button class="del-confirm" onclick="confirmDel()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 下ナビ（スマホ）＝ ＋登録 と マスタ だけ ===== -->
+<div class="bottomnav" id="bottomnav">
+  <div class="bn-side" style="visibility:hidden"></div>
+  <div class="bn-fab"><button onclick="showRegister()" aria-label="登録">＋</button><div class="bn-lbl">登録</div></div>
+  <button class="bn-side" onclick="showMaster()" aria-label="マスタ管理">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L16.2 2h-4l-.4 2.5a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.5h4l.4-2.5a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>マスタ</button>
+</div>
+
+<script>
+// ======================================
+// ★ここにGASのURLを貼り付けてください★
+const API_URL = "https://script.google.com/macros/s/AKfycbwApTDfD_mVGzcP0lr0V_7q_s73JQj2-uXzmtXq1avLzZ1477JNjed2AiA3U1tvYQff/exec";
+// ===== 展示会デモ：GAS/LINEに接続せず、架空データのみで動作（実データに触れない・保存しない） =====
+const DEMO_MODE = true;
+const _DEMO = {
+  list: {
+    masters: {
+      workersFull: [{name:'田中 一郎'},{name:'鈴木 二郎'},{name:'佐々木 三郎'},{name:'伊藤 四郎'},{name:'渡辺 五郎'},{name:'中村 六郎'}],
+      genbasFull: [
+        {name:'A線道路改良工事', kantoku:'山田', koki:'2026-09-01〜2027-03-31'},
+        {name:'B川護岸工事', kantoku:'佐藤', koki:'2026-10-01〜2027-02-28'},
+        {name:'C橋梁補修工事', kantoku:'高橋', koki:'2026-11-01〜2027-01-31'},
+        {name:'D地区下水道工事', kantoku:'山田', koki:'2026-08-01〜2026-12-28'}
+      ],
+      kantokus: ['山田','佐藤','高橋']
+    },
+    records: [
+      {rowIndex:2, name:'田中 一郎', genba:'A線道路改良工事', kantoku:'山田', start:'2026-10-20', end:'2026-11-28', registrant:'山田'},
+      {rowIndex:3, name:'鈴木 二郎', genba:'A線道路改良工事', kantoku:'山田', start:'2026-11-01', end:'2026-12-15', registrant:'山田'},
+      {rowIndex:4, name:'佐々木 三郎', genba:'B川護岸工事', kantoku:'佐藤', start:'2026-10-15', end:'2026-11-30', registrant:'佐藤'},
+      {rowIndex:5, name:'伊藤 四郎', genba:'C橋梁補修工事', kantoku:'高橋', start:'2026-11-04', end:'2027-01-20', registrant:'高橋'},
+      {rowIndex:6, name:'渡辺 五郎', genba:'D地区下水道工事', kantoku:'山田', start:'2026-10-01', end:'2026-12-10', registrant:'山田'},
+      {rowIndex:7, name:'中村 六郎', genba:'B川護岸工事', kantoku:'佐藤', start:'2026-11-10', end:'2027-02-10', registrant:'佐藤'},
+      {rowIndex:8, name:'田中 一郎', genba:'C橋梁補修工事', kantoku:'高橋', start:'2026-12-01', end:'2027-01-15', registrant:'高橋'}
+    ],
+    spots: [
+      {rowIndex:20, name:'鈴木 二郎', genba:'D地区下水道工事', kantoku:'山田', start:'2026-11-06', end:'2026-11-07'},
+      {rowIndex:21, name:'佐々木 三郎', genba:'C橋梁補修工事', kantoku:'高橋', start:'2026-11-12', end:'2026-11-12'}
+    ]
+  },
+  masters: {
+    workers: [{name:'田中 一郎'},{name:'鈴木 二郎'},{name:'佐々木 三郎'},{name:'伊藤 四郎'},{name:'渡辺 五郎'},{name:'中村 六郎'}],
+    genbas: [
+      {name:'A線道路改良工事', kantoku:'山田', koki:'2026-09-01〜2027-03-31'},
+      {name:'B川護岸工事', kantoku:'佐藤', koki:'2026-10-01〜2027-02-28'},
+      {name:'C橋梁補修工事', kantoku:'高橋', koki:'2026-11-01〜2027-01-31'},
+      {name:'D地区下水道工事', kantoku:'山田', koki:'2026-08-01〜2026-12-28'}
+    ],
+    kantokus: ['山田','佐藤','高橋']
+  }
+};
+async function DEMO_API_GET(action){
+  if(action==='list')    return JSON.parse(JSON.stringify(_DEMO.list));
+  if(action==='masters') return JSON.parse(JSON.stringify(_DEMO.masters));
+  return {};
+}
+// 例: const API_URL = "https://script.google.com/macros/s/XXXXXXXX/exec";
+// ======================================
+
+const COLORS = [
+  {bg:'#E6F1FB',color:'#0C447C'},{bg:'#E1F5EE',color:'#0F6E56'},
+  {bg:'#FAECE7',color:'#993C1D'},{bg:'#EEEDFE',color:'#3C3489'},
+  {bg:'#E0F2F1',color:'#00695C'},{bg:'#FBEAF0',color:'#72243E'}
+];
+
+let allData = [], allSpots = [], masters = { workers: [], genbas: [], kantokus: [] }, delTarget = null;
+let lastTappedCalDate = null; // カレンダーでタップしたセルの日付（スポット追加の初期値に使う）
+let lastPageBeforeRegister = 'calendar'; // 登録画面に入る前の画面
+let masterAuthed = false;
+let masterPassword = '';
+let dataLoaded = false;       // 一度でもサーバー取得が終わったか（タブ切替での再取得を避ける）
+const LIST_CACHE_KEY = 'chokuei_list_cache_v1';  // 前回データ（開いた瞬間に出す用）
+
+// ── ユーティリティ ──
+function showOverlay(msg) {
+  document.getElementById('overlay-msg').textContent = msg || '処理中...';
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+// 下ナビの表示切替（カレンダー/一覧でだけ出す）
+function showBottomNav(on) {
+  document.getElementById('bottomnav').classList.toggle('show', on);
+  document.body.classList.toggle('has-bottomnav', on);
+}
+function initials(n) { return n.replace(/\s/g, '').slice(0, 2); }
+function fmt(d) { if (!d) return ''; const p = d.split('-'); return p[1] + '/' + p[2]; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function hasKantoku(k) {
+  const v = (k || '').trim();
+  return v !== '' && v !== 'なし';
+}
+// 監督文字列をパース（カンマ・読点区切り、空・「なし」は除外）
+function parseKantokus(k) {
+  if (!k) return [];
+  return String(k).split(/[,、]/).map(s => s.trim()).filter(s => s && s !== 'なし');
+}
+// 監督配列を保存用文字列に変換
+function joinKantokus(arr) {
+  const cleaned = (arr || []).map(s => (s || '').trim()).filter(s => s && s !== 'なし');
+  if (cleaned.length === 0) return 'なし';
+  return cleaned.join(',');
+}
+// 表示用：「佐藤 ・ 高橋」のように中黒で繋ぐ
+function formatKantokus(k) {
+  const arr = parseKantokus(k);
+  if (arr.length === 0) return '';
+  return arr.join(' ・ ');
+}
+// 今日の日付（YYYY-MM-DD）
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+function renderKokiPreview(startVal, endVal, previewEl, daysEl) {
+  if (!startVal || !endVal) { previewEl.style.display = 'none'; return; }
+  const s = new Date(startVal), e = new Date(endVal);
+  if (isNaN(s) || isNaN(e)) { previewEl.style.display = 'none'; return; }
+  const diff = Math.round((e - s) / 86400000) + 1;
+  previewEl.style.display = 'flex';
+  if (diff <= 0) {
+    previewEl.classList.add('invalid');
+    daysEl.textContent = '終了日が開始日より前です';
+  } else {
+    previewEl.classList.remove('invalid');
+    daysEl.textContent = diff + '日間';
+  }
+}
+function updateEditKoki() {
+  renderKokiPreview(
+    document.getElementById('edit-start').value,
+    document.getElementById('edit-end').value,
+    document.getElementById('edit-koki-preview'),
+    document.getElementById('edit-koki-days')
+  );
+}
+function updateRegKoki() {
+  renderKokiPreview(
+    document.getElementById('inp-start').value,
+    document.getElementById('inp-end').value,
+    document.getElementById('reg-koki-preview'),
+    document.getElementById('reg-koki-days')
+  );
+}
+
+// ── API通信 ──
+async function apiGet(action) {
+  if (DEMO_MODE) return DEMO_API_GET(action);
+  const res = await fetch(`${API_URL}?action=${action}`, { redirect: 'follow' });
+  return res.json();
+}
+async function apiPost(body) {
+  if (DEMO_MODE) return { success: true }; // 展示会デモ：保存しない（この端末・サーバーに一切書き込まない）
+  await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body),
+    redirect: 'follow'
+  });
+  return { success: true };
+}
+
+// ── ページ切り替え ──
+function hideAllPages() {
+  document.getElementById('page-list').classList.remove('active');
+  document.getElementById('page-register').classList.remove('active');
+  document.getElementById('page-master').classList.remove('active');
+  document.getElementById('page-calendar').classList.remove('active');
+}
+function showList() {
+  hideAllPages();
+  document.getElementById('page-list').classList.add('active');
+  showBottomNav(true);
+  if (dataLoaded) render();   // 既に読込済みなら再取得せず即描画
+  else loadList();
+}
+function showRegister() {
+  // 登録画面に入る前の画面を覚える
+  if (document.getElementById('page-list').classList.contains('active')) {
+    lastPageBeforeRegister = 'list';
+  } else {
+    lastPageBeforeRegister = 'calendar';
+  }
+  hideAllPages();
+  document.getElementById('page-register').classList.add('active');
+  showBottomNav(false);
+  document.getElementById('reg-form').style.display = 'block';
+  document.getElementById('reg-success').style.display = 'none';
+  fillMasterSelects();
+}
+
+// 登録画面から前の画面に戻る
+function returnFromRegister() {
+  if (lastPageBeforeRegister === 'list') {
+    showList();
+  } else {
+    showCalendar();
+  }
+}
+function showMaster() {
+  if (!masterAuthed) {
+    openLoginModal();
+    return;
+  }
+  hideAllPages();
+  document.getElementById('page-master').classList.add('active');
+  showBottomNav(false);
+  loadMasters();
+}
+
+// ── 一覧 ──
+// ─────────────────────────────────
+// カレンダー画面
+// ─────────────────────────────────
+let calWeekStart = null;             // 表示中の週の月曜日 (Date)
+const FILTER_STORAGE_KEY = 'chokuei_visible_workers_v1';
+let userSettings = {};               // サーバーから読み込んだ自分の設定（LIFFログイン時のみ）
+
+// LIFFログイン済みならサーバーから設定を読み込む
+async function loadUserSettings() {
+  if (!lineUserId) return; // LIFF未ログインなら何もしない
+  try {
+    const res = await fetch(`${API_URL}?action=getUserSettings&userId=${encodeURIComponent(lineUserId)}`, { redirect: 'follow' });
+    const data = await res.json();
+    userSettings = data.settings || {};
+    console.log('User settings loaded:', userSettings);
+  } catch (e) {
+    console.warn('User settings load failed:', e);
+  }
+}
+
+// サーバーに保存（LIFFログイン時のみ）。失敗してもアプリは続行
+async function saveUserSettingsToServer() {
+  if (!lineUserId) return; // LIFF未ログインなら何もしない
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'saveUserSettings',
+        userId: lineUserId,
+        displayName: lineUserName || '',
+        settings: userSettings
+      }),
+      redirect: 'follow'
+    });
+  } catch (e) {
+    console.warn('User settings save failed:', e);
+  }
+}
+
+// 監督名から苗字を取り出す（スペース区切りの最初の部分）。複数なら「・」で繋ぐ
+function extractSurnames(kantoku) {
+  const list = parseKantokus(kantoku);
+  if (list.length === 0) return '';
+  return list.map(n => n.replace(/\s/g, ' ').split(' ')[0]).join('・');
+}
+
+// その作業員の rowIndex を返す（日付に該当するレコード、無ければ null）
+// スポットがあれば優先して返す
+function findRecordForDay(workerName, dateStr) {
+  // 先にスポットを探す
+  const spot = allSpots.find(s =>
+    s.name === workerName &&
+    s.start && s.end &&
+    s.start <= dateStr && dateStr <= s.end
+  );
+  if (spot) return { ...spot, _isSpot: true };
+  // 通常レコードを探す
+  return allData.find(r =>
+    r.name === workerName &&
+    r.start && r.end &&
+    r.start <= dateStr && dateStr <= r.end
+  );
+}
+
+// 月曜日の Date を返す（その日が属する週の月曜日）
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay(); // 0:日, 1:月, ..., 6:土
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+// Date → 'YYYY-MM-DD' 文字列
+function dateToStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+// 'M/D' で表示
+function fmtMD(d) {
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+function showCalendar() {
+  hideAllPages();
+  document.getElementById('page-calendar').classList.add('active');
+  showBottomNav(true);
+  if (!calWeekStart) calWeekStart = getMonday(new Date());
+  if (dataLoaded) renderCalendar();        // 既に読込済みなら再取得せず即描画
+  else loadListThenRenderCalendar();
+}
+
+async function loadListThenRenderCalendar() {
+  // データを再読み込みしてからカレンダー描画
+  await loadList(); // これは page-list 用 render も内部で呼ぶが、page-calendar が active なら見えないだけ
+  renderCalendar();
+}
+
+function calShiftWeek(weeks) {
+  calWeekStart.setDate(calWeekStart.getDate() + 7 * weeks);
+  renderCalendar();
+}
+function calGoToday() {
+  calWeekStart = getMonday(new Date());
+  renderCalendar();
+}
+
+// 表示対象作業員リスト：LIFFログイン時はサーバー保存、未ログイン時はlocalStorage
+function getVisibleWorkers() {
+  // LIFFログイン時：userSettings から取得
+  if (lineUserId && userSettings && Array.isArray(userSettings.visibleWorkers)) {
+    return userSettings.visibleWorkers;
+  }
+  // 未ログイン時：localStorageから
+  if (!lineUserId) {
+    try {
+      const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) { return null; }
+  }
+  return null; // ログイン済みだが未設定 → 全員
+}
+function setVisibleWorkers(names) {
+  if (lineUserId) {
+    // サーバー保存（非同期、待たない）
+    userSettings.visibleWorkers = names;
+    saveUserSettingsToServer();
+  } else {
+    // localStorage 保存
+    try {
+      localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(names));
+    } catch(e) {}
+  }
+}
+
+function renderCalendar() {
+  const container = document.getElementById('cal-content');
+  // 7日分の日付を作る
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(calWeekStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  // ヘッダー範囲表示
+  document.getElementById('cal-range').textContent =
+    fmtMD(days[0]) + ' 〜 ' + fmtMD(days[6]) + '（' + days[0].getFullYear() + '）';
+
+  // 表示する作業員（マスタ順、フィルタ適用）
+  const visible = getVisibleWorkers();
+  const allWorkers = (masters.workers || []).map(w => w.name);
+  const workers = visible == null ? allWorkers : allWorkers.filter(n => visible.includes(n));
+
+  if (workers.length === 0) {
+    container.innerHTML = '<div class="cal-empty">表示する作業員が選択されていません<br><br><button class="cal-nav-btn" onclick="openFilterModal()" style="padding:6px 16px;">表示する人を選ぶ</button></div>';
+    return;
+  }
+
+  const today = todayStr();
+  const dayNames = ['日','月','火','水','木','金','土'];
+
+  // ヘッダー
+  let html = '<table class="cal-table"><thead><tr><th></th>';
+  days.forEach(d => {
+    const ds = dateToStr(d);
+    const dow = d.getDay();
+    const isWeekend = (dow === 0 || dow === 6);
+    const isToday = (ds === today);
+    const cls = (isToday ? 'today' : '') + (isWeekend ? ' weekend' : '');
+    html += `<th class="${cls}">${d.getMonth()+1}/${d.getDate()}<span class="day-of-week">${dayNames[dow]}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  // 各作業員の行
+  workers.forEach((name, wi) => {
+    const c = COLORS[wi % COLORS.length];
+    html += `<tr><td class="name-col" style="background:${c.bg};color:${c.color};">${esc(name)}</td>`;
+    days.forEach(d => {
+      const ds = dateToStr(d);
+      const dow = d.getDay();
+      const isWeekend = (dow === 0 || dow === 6);
+      const rec = findRecordForDay(name, ds);
+      if (rec) {
+        const surnames = extractSurnames(rec.kantoku);
+        const _g = (rec.genba && rec.genba.trim()) ? rec.genba.trim() : (surnames || '');
+        const display = _g.length > 7 ? _g.slice(0, 7) + '…' : _g; // 長い工事名は省略（全文はタップ/ツールチップで）
+        if (rec._isSpot) {
+          // スポット：太字＋オレンジ系の枠
+          html += `<td class="cal-cell cal-spot" onclick="lastTappedCalDate='${ds}';openSpotEdit(${rec.rowIndex})" title="⚡スポット: ${esc(rec.genba)}${rec.kantoku ? ' / 監督:' + esc(formatKantokus(rec.kantoku)) : ''}">${esc(display)}</td>`;
+        } else {
+          html += `<td class="cal-cell" style="background:${c.bg};color:${c.color};" onclick="lastTappedCalDate='${ds}';openEdit(${rec.rowIndex})" title="${esc(rec.genba)}${rec.kantoku ? ' / 監督:' + esc(formatKantokus(rec.kantoku)) : ''}">${esc(display)}</td>`;
+        }
+      } else {
+        html += `<td class="${isWeekend ? 'weekend' : ''} cal-empty-cell" onclick="openAddGenbaFromCalendar('${esc(name).replace(/'/g, "\\'")}','${ds}')" title="クリックで現場を追加"></td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ── 表示する人モーダル ──
+function openFilterModal() {
+  const list = document.getElementById('filter-modal-list');
+  const allWorkers = (masters.workers || []).map(w => w.name);
+  const visible = getVisibleWorkers();
+  list.innerHTML = '';
+  allWorkers.forEach((name, i) => {
+    const checked = (visible == null || visible.includes(name)) ? 'checked' : '';
+    const id = 'fchk-' + i;
+    const item = document.createElement('div');
+    item.className = 'filter-modal-item';
+    item.innerHTML = `<input type="checkbox" id="${id}" ${checked} value="${esc(name)}"><label for="${id}">${esc(name)}</label>`;
+    list.appendChild(item);
+  });
+  document.getElementById('filter-modal-bg').style.display = 'block';
+}
+function closeFilterModal() {
+  document.getElementById('filter-modal-bg').style.display = 'none';
+}
+function filterSelectAll() {
+  document.querySelectorAll('#filter-modal-list input[type=checkbox]').forEach(c => c.checked = true);
+}
+function filterSelectNone() {
+  document.querySelectorAll('#filter-modal-list input[type=checkbox]').forEach(c => c.checked = false);
+}
+function applyFilter() {
+  const selected = [];
+  document.querySelectorAll('#filter-modal-list input[type=checkbox]').forEach(c => {
+    if (c.checked) selected.push(c.value);
+  });
+  setVisibleWorkers(selected);
+  closeFilterModal();
+  renderCalendar();
+}
+
+// 取得データを state に反映（サーバー結果・キャッシュ共通）
+function applyListData(result) {
+  const m = result.masters || {};
+  masters = {
+    workers: Array.isArray(m.workersFull) ? m.workersFull
+            : Array.isArray(m.workers) ? m.workers.map(w => typeof w === 'string' ? { name: w } : w)
+            : [],
+    genbas: Array.isArray(m.genbasFull) ? m.genbasFull
+           : Array.isArray(m.genbas) ? m.genbas.map(g => typeof g === 'string' ? { name: g, kantoku: '' } : g)
+           : [],
+    kantokus: Array.isArray(m.kantokus) ? m.kantokus : []
+  };
+  allData = result.records || [];
+  allSpots = result.spots || [];
+}
+
+async function loadList(silent) {
+  // silent=true：既にキャッシュで画面表示済み → 全画面ローディングを出さず裏で更新
+  if (!silent) showOverlay('読み込み中...');
+  try {
+    const result = await apiGet('list');
+    applyListData(result);
+    dataLoaded = true;
+    try { localStorage.setItem(LIST_CACHE_KEY, JSON.stringify(result)); } catch(e) {}  // 次回の即表示用
+    render();
+    // カレンダー画面が表示中なら再描画
+    if (document.getElementById('page-calendar').classList.contains('active')) {
+      renderCalendar();
+    }
+  } catch(e) {
+    if (!silent && !dataLoaded) document.getElementById('list').innerHTML = '<div class="empty">読み込みに失敗しました</div>';
+  }
+  if (!silent) hideOverlay();
+}
+
+// allData から作業員ごとに「今」「次」「3件目以降」を抽出してグループ化
+function buildWorkerGroups() {
+  const today = todayStr();
+  // 終了予定日が今日以降のものだけ残す
+  const active = allData.filter(d => d.end && d.end >= today);
+  const groups = new Map();
+  active.forEach(d => {
+    if (!groups.has(d.name)) groups.set(d.name, []);
+    groups.get(d.name).push(d);
+  });
+  const result = [];
+  // 全作業員（スポットしかない人も拾うため、作業員リストからループ）
+  const workerNames = new Set();
+  groups.forEach((_, name) => workerNames.add(name));
+  // 今日以降のスポットがある人も含める
+  allSpots.forEach(s => {
+    if (s.end && s.end >= today) workerNames.add(s.name);
+  });
+
+  for (const name of workerNames) {
+    const records = groups.get(name) || [];
+    records.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+    let now = records.find(r => r.start && r.start <= today && r.end >= today) || null;
+
+    // この作業員のスポット（今日以降）
+    const personSpots = allSpots
+      .filter(s => s.name === name && s.end && s.end >= today)
+      .map(s => ({
+        rowIndex: s.rowIndex,
+        name: s.name,
+        genba: s.genba,
+        kantoku: s.kantoku,
+        start: s.start,
+        end: s.end,
+        _isSpot: true
+      }));
+
+    // 今日のスポットがあれば「今」として優先
+    const todaySpot = personSpots.find(s => s.start <= today && today <= s.end);
+    let originalNowAsBacklog = null;
+    if (todaySpot) {
+      if (now) originalNowAsBacklog = now;
+      now = todaySpot;
+    }
+
+    // 「次」以降の候補：長期予定の未来分 + 未来のスポット + (元の今が押し下げられたなら) それも
+    const future = records.filter(r => r.start && r.start > today);
+    const futureSpots = personSpots.filter(s => s !== todaySpot && s.start > today);
+    const allFuture = [...future, ...futureSpots];
+    if (originalNowAsBacklog) allFuture.push(originalNowAsBacklog);
+    // 開始日順に並び替え（押し下げられた元の今は start <= today なので一番先頭になる）
+    allFuture.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+
+    let next = null, upcoming = null, extras = [];
+    if (now) {
+      next = allFuture[0] || null;
+      extras = allFuture.slice(1);
+    } else if (allFuture.length > 0) {
+      upcoming = allFuture[0];
+      extras = allFuture.slice(1);
+    }
+
+    if (!now && !upcoming) continue;
+    result.push({ name, now, next, upcoming, extras });
+  }
+  return result;
+}
+
+function render() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const groups = buildWorkerGroups();
+  const filtered = groups.filter(g => {
+    if (!q) return true;
+    const slots = [g.now, g.next, g.upcoming].filter(Boolean);
+    return g.name.toLowerCase().includes(q) ||
+           slots.some(s =>
+             (s.genba || '').toLowerCase().includes(q) ||
+             (s.kantoku || '').toLowerCase().includes(q)
+           );
+  });
+  const sub = document.getElementById('header-sub');
+  if (sub) {
+    const userPart = lineUserName ? `👤 ${lineUserName} / ` : '';
+    sub.textContent = userPart + groups.length + '名 稼働中';
+  }
+  document.getElementById('count').textContent = filtered.length + '名';
+  if (!filtered.length) { document.getElementById('list').innerHTML = '<div class="empty">該当なし</div>'; return; }
+
+  document.getElementById('list').innerHTML = filtered.map((g, i) => {
+    const c = COLORS[i % COLORS.length];
+    let slotsHtml = '';
+
+    if (g.now) {
+      const kt = hasKantoku(g.now.kantoku)
+        ? `<span class="kantoku-tag has">監督 ${esc(formatKantokus(g.now.kantoku))}</span>`
+        : `<span class="kantoku-tag none">監督 なし</span>`;
+      const isSpot = g.now._isSpot;
+      const editHandler = isSpot ? `openSpotEdit(${g.now.rowIndex})` : `openEdit(${g.now.rowIndex})`;
+      const badgeText = isSpot ? '⚡ 今（スポット）' : '今';
+      const slotClass = isSpot ? 'slot-box now-spot' : 'slot-box';
+      slotsHtml += `<div class="${slotClass}">
+        <div class="slot-header">
+          <span class="slot-badge now">${badgeText}</span>
+          <button class="slot-edit" onclick="${editHandler}">編集</button>
+        </div>
+        <div class="slot-genba">${esc(g.now.genba)}</div>
+        <div class="slot-meta">
+          <span class="slot-koki">${fmt(g.now.start)} 〜 ${fmt(g.now.end)}</span>
+          ${kt}
+        </div>
+      </div>`;
+      if (g.next) {
+        const nextIsSpot = g.next._isSpot;
+        const nextEditHandler = nextIsSpot ? `openSpotEdit(${g.next.rowIndex})` : `openEdit(${g.next.rowIndex})`;
+        const nextBadge = nextIsSpot ? '⚡ 次' : '次';
+        slotsHtml += `<div class="slot-box next">
+          <div class="slot-header">
+            <span class="slot-badge next">${nextBadge}</span>
+            <button class="slot-edit" onclick="${nextEditHandler}">編集</button>
+          </div>
+          <div class="slot-genba">${esc(g.next.genba)}</div>
+          <div class="slot-meta">
+            <span class="slot-koki">${fmt(g.next.start)}〜${fmt(g.next.end)}</span>
+          </div>
+        </div>`;
+      }
+    } else if (g.upcoming) {
+      const kt = hasKantoku(g.upcoming.kantoku)
+        ? `<span class="kantoku-tag has">監督 ${esc(formatKantokus(g.upcoming.kantoku))}</span>`
+        : `<span class="kantoku-tag none">監督 なし</span>`;
+      const upIsSpot = g.upcoming._isSpot;
+      const upEditHandler = upIsSpot ? `openSpotEdit(${g.upcoming.rowIndex})` : `openEdit(${g.upcoming.rowIndex})`;
+      const upBadge = upIsSpot ? '⚡ 開始前' : '開始前';
+      slotsHtml += `<div class="slot-box upcoming">
+        <div class="slot-header">
+          <span class="slot-badge upcoming">${upBadge}</span>
+          <button class="slot-edit" onclick="${upEditHandler}">編集</button>
+        </div>
+        <div class="slot-genba">${esc(g.upcoming.genba)}</div>
+        <div class="slot-meta">
+          <span class="slot-koki">${fmt(g.upcoming.start)} 〜 ${fmt(g.upcoming.end)}</span>
+          ${kt}
+        </div>
+      </div>`;
+    }
+
+    // 3件目以降：折りたたみ
+    if (g.extras && g.extras.length > 0) {
+      const extrasKey = `extras-${esc(g.name).replace(/[^a-zA-Z0-9]/g, '_')}-${i}`;
+      const extrasHtml = g.extras.map((r, idx) => {
+        const extraIsSpot = r._isSpot;
+        const extraEditHandler = extraIsSpot ? `openSpotEdit(${r.rowIndex})` : `openEdit(${r.rowIndex})`;
+        const extraBadge = extraIsSpot ? `⚡ ${idx + 3}件目` : `${idx + 3}件目`;
+        return `
+        <div class="slot-box next">
+          <div class="slot-header">
+            <span class="slot-badge next">${extraBadge}</span>
+            <button class="slot-edit" onclick="${extraEditHandler}">編集</button>
+          </div>
+          <div class="slot-genba">${esc(r.genba)}</div>
+          <div class="slot-meta">
+            <span class="slot-koki">${fmt(r.start)}〜${fmt(r.end)}</span>
+          </div>
+        </div>
+      `;}).join('');
+      slotsHtml += `
+        <button class="extras-toggle" id="btn-${extrasKey}" onclick="toggleExtras('${extrasKey}')">他に${g.extras.length}件 ▾</button>
+        <div class="extras-wrap" id="${extrasKey}" style="display:none;">${extrasHtml}</div>
+      `;
+    }
+
+    return `<div class="card">
+      <div class="card-top">
+        <div class="card-name-row">
+          <div class="avatar" style="background:${c.bg};color:${c.color}">${esc(initials(g.name))}</div>
+          <div class="name">${esc(g.name)}</div>
+        </div>
+        <button class="add-genba-btn" onclick="openAddGenbaModal('${esc(g.name).replace(/'/g, "\\'")}')">＋ 次の現場を追加</button>
+      </div>
+      ${slotsHtml}
+    </div>`;
+  }).join('');
+}
+
+// 3件目以降の折りたたみトグル
+function toggleExtras(key) {
+  const wrap = document.getElementById(key);
+  const btn = document.getElementById('btn-' + key);
+  if (!wrap || !btn) return;
+  if (wrap.style.display === 'none') {
+    wrap.style.display = 'block';
+    btn.textContent = btn.textContent.replace('▾', '▴');
+  } else {
+    wrap.style.display = 'none';
+    btn.textContent = btn.textContent.replace('▴', '▾');
+  }
+}
+
+// ── 削除 ──
+function del(idx) {
+  delTarget = idx;
+  document.getElementById('del-overlay').classList.add('show');
+  document.getElementById('del-modal').classList.add('show');
+}
+function delFromEdit() {
+  const idx = parseInt(document.getElementById('edit-row').value);
+  if (!idx) return;
+  closeModal();
+  del(idx);
+}
+function closeDelModal() {
+  delTarget = null;
+  document.getElementById('del-overlay').classList.remove('show');
+  document.getElementById('del-modal').classList.remove('show');
+}
+async function confirmDel() {
+  if (delTarget === null) return;
+  const idx = delTarget;
+  closeDelModal();
+  showOverlay('削除中...');
+  await apiPost({ action: 'delete', rowIndex: idx });
+  allData = allData.filter(d => d.rowIndex !== idx);
+  hideOverlay();
+  render();
+  // カレンダー画面が表示中なら再描画
+  if (document.getElementById('page-calendar').classList.contains('active')) {
+    renderCalendar();
+  }
+}
+
+// ── 編集モーダル ──
+function onEditGenbaChange() {
+  const val = document.getElementById('edit-genba').value;
+  const freeInput = document.getElementById('edit-genba-free');
+  const kantokuGroup = document.getElementById('edit-kantoku-group');
+  const kantokuFreeGroup = document.getElementById('edit-kantoku-free-group');
+  if (val === '__free__') {
+    freeInput.style.display = 'block';
+    kantokuGroup.style.display = 'none';
+    kantokuFreeGroup.style.display = 'block';
+    // 監督プルダウンを組み立て（既存の値があれば復元）
+    const currentK = (document.getElementById('edit-kantoku').value || '').trim();
+    const selectEl = document.getElementById('edit-kantoku-free-select');
+    buildKantokuFreeSelect(selectEl, currentK && currentK !== 'なし' ? currentK : '');
+    handleKantokuFreeChange('edit-kantoku-free-select', 'edit-kantoku-free-input');
+  } else {
+    freeInput.style.display = 'none';
+    kantokuGroup.style.display = 'block';
+    kantokuFreeGroup.style.display = 'none';
+    const found = masters.genbas.find(g => g.name === val);
+    const k = found ? found.kantoku : '';
+    document.getElementById('edit-kantoku').value = k;
+    document.getElementById('edit-kantoku-disp').textContent = formatKantokus(k) || '—';
+  }
+}
+function onEditKantokuFreeChange() {
+  handleKantokuFreeChange('edit-kantoku-free-select', 'edit-kantoku-free-input');
+}
+function openEdit(idx) {
+  const d = allData.find(r => r.rowIndex === idx);
+  if (!d) return;
+  document.getElementById('edit-row').value = idx;
+
+  // 登録者を表示
+  document.getElementById('edit-registrant-label').textContent = d.registrant ? '登録者: ' + d.registrant : '';
+
+  // 「今」「次」バッジを設定
+  const today = todayStr();
+  const badgeWrap = document.getElementById('edit-slot-badge-wrap');
+  const badge = document.getElementById('edit-slot-badge');
+  let badgeType = null;
+  if (d.start && d.end) {
+    if (d.start <= today && d.end >= today) badgeType = 'now';
+    else if (d.start > today) badgeType = 'next';
+  }
+  if (badgeType === 'now') {
+    badge.className = 'slot-badge now';
+    badge.textContent = '今';
+    badgeWrap.style.display = 'block';
+  } else if (badgeType === 'next') {
+    badge.className = 'slot-badge next';
+    badge.textContent = '次';
+    badgeWrap.style.display = 'block';
+  } else {
+    badgeWrap.style.display = 'none';
+  }
+
+  const ws = document.getElementById('edit-worker');
+  const gs = document.getElementById('edit-genba');
+  ws.innerHTML = ''; gs.innerHTML = '';
+  masters.workers.forEach(w => { const o = document.createElement('option'); o.textContent = w.name; if (w.name === d.name) o.selected = true; ws.appendChild(o); });
+  // マスタにない現場名なら、現在の値をプルダウン先頭に追加
+  const inMaster = masters.genbas.some(g => g.name === d.genba);
+  if (!inMaster && d.genba) {
+    const cur = document.createElement('option');
+    cur.value = d.genba; cur.textContent = d.genba;
+    cur.selected = true;
+    gs.appendChild(cur);
+  }
+  const free = document.createElement('option'); free.value = '__free__'; free.textContent = '✏️ 直接入力する'; gs.appendChild(free);
+  masters.genbas.forEach(g => { const o = document.createElement('option'); o.value = g.name; o.textContent = g.name; if (g.name === d.genba) o.selected = true; gs.appendChild(o); });
+  document.getElementById('edit-genba-free').style.display = 'none';
+  document.getElementById('edit-kantoku-group').style.display = 'block';
+  document.getElementById('edit-kantoku-free-group').style.display = 'none';
+  document.getElementById('edit-kantoku-free-input').style.display = 'none';
+  document.getElementById('edit-kantoku-free-input').value = '';
+  // 現レコードの監督値を hidden にセット（onEditGenbaChange が直接入力モードで参照する）
+  document.getElementById('edit-kantoku').value = d.kantoku || '';
+  document.getElementById('edit-start').value = d.start;
+  document.getElementById('edit-end').value = d.end;
+  onEditGenbaChange();
+  updateEditKoki();
+  document.getElementById('modal-bg').style.display = 'block';
+}
+function closeModal() { document.getElementById('modal-bg').style.display = 'none'; }
+async function saveEdit() {
+  const idx = parseInt(document.getElementById('edit-row').value);
+  const name = document.getElementById('edit-worker').value;
+  const selGenba = document.getElementById('edit-genba').value;
+  const genba = selGenba === '__free__' ? document.getElementById('edit-genba-free').value.trim() : selGenba;
+  const kantoku = selGenba === '__free__'
+    ? readKantokuFreeValue('edit-kantoku-free-select', 'edit-kantoku-free-input')
+    : document.getElementById('edit-kantoku').value;
+  const start = document.getElementById('edit-start').value;
+  const end = document.getElementById('edit-end').value;
+  if (!start || !end) { alert('日付を入力してください'); return; }
+  closeModal();
+  showOverlay('保存中...');
+  await apiPost({ action: 'update', rowIndex: idx, name, genba, kantoku, start, end, registrant: lineUserName || '' });
+  const d = allData.find(r => r.rowIndex === idx);
+  if (d) { d.name = name; d.genba = genba; d.kantoku = kantoku; d.start = start; d.end = end; }
+  hideOverlay();
+  render();
+  if (document.getElementById('page-calendar').classList.contains('active')) {
+    renderCalendar();
+  }
+}
+
+// ── 作業員カードからの「現場を追加」モーダル ──
+function updateAddGenbaKoki() {
+  const startEl = document.getElementById('add-genba-start');
+  const endEl = document.getElementById('add-genba-end');
+  if (startEl.value && !endEl.value) {
+    endEl.value = startEl.value;
+  }
+  renderKokiPreview(
+    startEl.value,
+    endEl.value,
+    document.getElementById('add-genba-koki-preview'),
+    document.getElementById('add-genba-koki-days')
+  );
+}
+// ─────────────────────────────────
+// スポット機能
+// ─────────────────────────────────
+function updateSpotKoki() {
+  // 開始日が入って終了日が空なら、終了日に開始日と同じ日を入れる
+  const startEl = document.getElementById('spot-start');
+  const endEl = document.getElementById('spot-end');
+  if (startEl.value && !endEl.value) {
+    endEl.value = startEl.value;
+  }
+  renderKokiPreview(
+    startEl.value,
+    endEl.value,
+    document.getElementById('spot-koki-preview'),
+    document.getElementById('spot-koki-days')
+  );
+}
+
+// 編集モーダルから「スポットを追加」を押した時
+function openSpotFromEdit() {
+  const idx = parseInt(document.getElementById('edit-row').value);
+  const base = allData.find(r => r.rowIndex === idx);
+  if (!base) return;
+  closeModal();
+  openSpotModal({
+    baseRow: idx,
+    workerName: base.name,
+    baseGenba: base.genba,
+    baseStart: base.start,
+    baseEnd: base.end,
+    initStart: lastTappedCalDate || '',
+    initEnd: lastTappedCalDate || ''
+  });
+}
+
+// カレンダーから既存スポットをタップした時（編集モード）
+function openSpotEdit(spotRowIndex) {
+  const spot = allSpots.find(s => s.rowIndex === spotRowIndex);
+  if (!spot) return;
+  // 元レコードの情報も持ってくる
+  const base = allData.find(r => r.rowIndex === spot.baseRow);
+  openSpotModal({
+    spotRowIndex: spotRowIndex,
+    baseRow: spot.baseRow,
+    workerName: spot.name,
+    baseGenba: base ? base.genba : '',
+    baseStart: base ? base.start : '',
+    baseEnd: base ? base.end : '',
+    initStart: spot.start,
+    initEnd: spot.end,
+    initGenba: spot.genba,
+    initKantoku: spot.kantoku,
+    registrant: spot.registrant || ''
+  });
+}
+
+function openSpotModal(opts) {
+  const isEdit = !!opts.spotRowIndex;
+  document.getElementById('spot-edit-row').value = opts.spotRowIndex || '';
+  document.getElementById('spot-base-row').value = opts.baseRow || '';
+  document.getElementById('spot-worker-name').value = opts.workerName || '';
+
+  document.getElementById('spot-modal-title').textContent = isEdit ? '⚡ スポットを編集' : '⚡ スポットを追加';
+  document.getElementById('spot-save-btn').textContent = isEdit ? '保存' : '追加する';
+  document.getElementById('spot-delete-btn').style.display = isEdit ? 'block' : 'none';
+
+  // 登録者表示
+  document.getElementById('spot-registrant-label').textContent =
+    (isEdit && opts.registrant) ? '登録者: ' + opts.registrant : '';
+
+  // サブタイトル
+  const baseLabel = opts.baseGenba
+    ? `${opts.workerName} さん・${opts.baseGenba}（${fmt(opts.baseStart)}〜${fmt(opts.baseEnd)}）に挾む`
+    : `${opts.workerName} さん（元レコード不明）`;
+  document.getElementById('spot-modal-subtitle').textContent = baseLabel;
+
+  // 日付プリセット
+  // 追加時：opts.initStart（カレンダーでタップした日付）／編集時：既存スポットの日付
+  document.getElementById('spot-start').value = opts.initStart || '';
+  document.getElementById('spot-end').value = opts.initEnd || opts.initStart || '';
+
+  // 現場プルダウン
+  const gs = document.getElementById('spot-genba');
+  gs.innerHTML = '<option value="">選択してください</option>';
+  const spotFree = document.createElement('option');
+  spotFree.value = '__free__'; spotFree.textContent = '✏️ 直接入力する';
+  gs.appendChild(spotFree);
+  // initGenba がマスタにない場合、現在値を追加
+  if (opts.initGenba && !masters.genbas.find(g => g.name === opts.initGenba)) {
+    const cur = document.createElement('option');
+    cur.value = opts.initGenba; cur.textContent = opts.initGenba; cur.selected = true;
+    gs.appendChild(cur);
+  }
+  masters.genbas.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.name; o.textContent = g.name;
+    if (g.name === opts.initGenba) o.selected = true;
+    gs.appendChild(o);
+  });
+
+  document.getElementById('spot-genba-free').value = '';
+  document.getElementById('spot-genba-free').style.display = 'none';
+  document.getElementById('spot-kantoku-group').style.display = 'block';
+  document.getElementById('spot-kantoku-free-group').style.display = 'none';
+  document.getElementById('spot-kantoku-free-input').style.display = 'none';
+  document.getElementById('spot-kantoku-free-input').value = '';
+  document.getElementById('spot-kantoku').value = opts.initKantoku || '';
+
+  onSpotGenbaChange();
+  updateSpotKoki();
+  document.getElementById('spot-modal-bg').style.display = 'block';
+}
+
+function closeSpotModal() {
+  document.getElementById('spot-modal-bg').style.display = 'none';
+}
+
+function onSpotGenbaChange() {
+  const val = document.getElementById('spot-genba').value;
+  const freeInput = document.getElementById('spot-genba-free');
+  const kantokuGroup = document.getElementById('spot-kantoku-group');
+  const kantokuFreeGroup = document.getElementById('spot-kantoku-free-group');
+  if (val === '__free__') {
+    freeInput.style.display = 'block';
+    kantokuGroup.style.display = 'none';
+    kantokuFreeGroup.style.display = 'block';
+    const selectEl = document.getElementById('spot-kantoku-free-select');
+    buildKantokuFreeSelect(selectEl, '');
+    handleKantokuFreeChange('spot-kantoku-free-select', 'spot-kantoku-free-input');
+  } else {
+    freeInput.style.display = 'none';
+    kantokuGroup.style.display = 'block';
+    kantokuFreeGroup.style.display = 'none';
+    const found = masters.genbas.find(g => g.name === val);
+    const k = found ? found.kantoku : '';
+    document.getElementById('spot-kantoku').value = k;
+    document.getElementById('spot-kantoku-disp').textContent = formatKantokus(k) || '（未設定）';
+  }
+}
+function onSpotKantokuFreeChange() {
+  handleKantokuFreeChange('spot-kantoku-free-select', 'spot-kantoku-free-input');
+}
+
+async function saveSpot() {
+  const spotRowIndex = document.getElementById('spot-edit-row').value;
+  const baseRow = document.getElementById('spot-base-row').value;
+  const name = document.getElementById('spot-worker-name').value;
+  const selGenba = document.getElementById('spot-genba').value;
+  const genba = selGenba === '__free__' ? document.getElementById('spot-genba-free').value.trim() : selGenba;
+  const kantoku = selGenba === '__free__'
+    ? readKantokuFreeValue('spot-kantoku-free-select', 'spot-kantoku-free-input')
+    : document.getElementById('spot-kantoku').value;
+  const start = document.getElementById('spot-start').value;
+  const end = document.getElementById('spot-end').value;
+  if (!genba || !start || !end) {
+    const m = [];
+    if (!genba) m.push('現場名');
+    if (!start) m.push('開始日');
+    if (!end) m.push('終了予定日');
+    alert(m.join('・') + 'を入力してください');
+    return;
+  }
+  closeSpotModal();
+  showOverlay(spotRowIndex ? '保存中...' : '追加中...');
+  if (spotRowIndex) {
+    await apiPost({ action: 'updateSpot', rowIndex: parseInt(spotRowIndex), name, genba, kantoku, start, end, registrant: lineUserName || '' });
+  } else {
+    await apiPost({ action: 'addSpot', name, genba, kantoku, start, end, baseRow: parseInt(baseRow) || '', registrant: lineUserName || '' });
+  }
+  await loadList();
+}
+
+async function deleteSpot() {
+  const spotRowIndex = document.getElementById('spot-edit-row').value;
+  if (!spotRowIndex) return;
+  if (!confirm('このスポットを削除しますか?\n元の長期予定が自動的に元通り表示されます。')) return;
+  closeSpotModal();
+  showOverlay('削除中...');
+  await apiPost({ action: 'deleteSpot', rowIndex: parseInt(spotRowIndex) });
+  await loadList();
+}
+
+// ─────────────────────────────────
+// カレンダーの空白セルから新規追加
+// ─────────────────────────────────
+// カレンダーの空白セルから「次の現場を追加」モーダルを開く（開始日プリフィル）
+function openAddGenbaFromCalendar(workerName, dateStr) {
+  openAddGenbaModal(workerName);
+  setTimeout(() => {
+    document.getElementById('add-genba-start').value = dateStr;
+    updateAddGenbaKoki();
+  }, 50);
+}
+function openAddGenbaModal(workerName) {
+  document.getElementById('add-genba-target-name').value = workerName;
+  document.getElementById('add-genba-modal-subtitle').textContent = workerName + ' さんに次の現場を追加';
+  // 現場プルダウンを組み立て
+  const gs = document.getElementById('add-genba-input-select');
+  gs.innerHTML = '<option value="">選択してください</option>';
+  const free = document.createElement('option');
+  free.value = '__free__'; free.textContent = '✏️ 直接入力する';
+  gs.appendChild(free);
+  masters.genbas.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.name; o.textContent = g.name;
+    gs.appendChild(o);
+  });
+  // フォームをリセット
+  document.getElementById('add-genba-input-free').value = '';
+  document.getElementById('add-genba-input-free').style.display = 'none';
+  document.getElementById('add-genba-kantoku-group').style.display = 'block';
+  document.getElementById('add-genba-kantoku-free-group').style.display = 'none';
+  document.getElementById('add-genba-kantoku-free-input').style.display = 'none';
+  document.getElementById('add-genba-kantoku-free-input').value = '';
+  document.getElementById('add-genba-kantoku').value = '';
+  document.getElementById('add-genba-kantoku-disp').textContent = '現場を選ぶと自動表示されます';
+  document.getElementById('add-genba-start').value = '';
+  document.getElementById('add-genba-end').value = '';
+  document.getElementById('add-genba-koki-preview').style.display = 'none';
+  document.getElementById('add-genba-modal-bg').style.display = 'block';
+}
+function closeAddGenbaModal() {
+  document.getElementById('add-genba-modal-bg').style.display = 'none';
+}
+function onAddGenbaChange() {
+  const val = document.getElementById('add-genba-input-select').value;
+  const freeInput = document.getElementById('add-genba-input-free');
+  const kantokuGroup = document.getElementById('add-genba-kantoku-group');
+  const kantokuFreeGroup = document.getElementById('add-genba-kantoku-free-group');
+  if (val === '__free__') {
+    freeInput.style.display = 'block';
+    kantokuGroup.style.display = 'none';
+    kantokuFreeGroup.style.display = 'block';
+    const selectEl = document.getElementById('add-genba-kantoku-free-select');
+    buildKantokuFreeSelect(selectEl, '');
+    handleKantokuFreeChange('add-genba-kantoku-free-select', 'add-genba-kantoku-free-input');
+  } else {
+    freeInput.style.display = 'none';
+    kantokuGroup.style.display = 'block';
+    kantokuFreeGroup.style.display = 'none';
+    const found = masters.genbas.find(g => g.name === val);
+    const k = found ? found.kantoku : '';
+    document.getElementById('add-genba-kantoku').value = k;
+    document.getElementById('add-genba-kantoku-disp').textContent = formatKantokus(k) || '（未設定）';
+  }
+}
+function onAddGenbaKantokuFreeChange() {
+  handleKantokuFreeChange('add-genba-kantoku-free-select', 'add-genba-kantoku-free-input');
+}
+async function saveAddGenba() {
+  const name = document.getElementById('add-genba-target-name').value;
+  const selGenba = document.getElementById('add-genba-input-select').value;
+  const genba = selGenba === '__free__' ? document.getElementById('add-genba-input-free').value.trim() : selGenba;
+  const kantoku = selGenba === '__free__'
+    ? readKantokuFreeValue('add-genba-kantoku-free-select', 'add-genba-kantoku-free-input')
+    : document.getElementById('add-genba-kantoku').value;
+  const start = document.getElementById('add-genba-start').value;
+  const end = document.getElementById('add-genba-end').value;
+  if (!genba || !start || !end) {
+    const m = [];
+    if (!genba) m.push('現場名');
+    if (!start) m.push('開始日');
+    if (!end) m.push('終了予定日');
+    alert(m.join('・') + 'を選択してください'); return;
+  }
+  closeAddGenbaModal();
+  showOverlay('追加中...');
+  await apiPost({ action: 'add', name, genba, kantoku, start, end, registrant: lineUserName || '' });
+  hideOverlay();
+  await loadList();
+}
+
+// ── 登録フォーム ──
+function fillMasterSelects() {
+  const ws = document.getElementById('sel-worker');
+  const gs = document.getElementById('sel-genba');
+  ws.innerHTML = '<option value="">選択してください</option>';
+  gs.innerHTML = '<option value="">選択してください</option>';
+  masters.workers.forEach(w => { const o = document.createElement('option'); o.textContent = w.name; ws.appendChild(o); });
+  const free = document.createElement('option'); free.value = '__free__'; free.textContent = '✏️ 直接入力する'; gs.appendChild(free);
+  masters.genbas.forEach(g => { const o = document.createElement('option'); o.value = g.name; o.textContent = g.name; gs.appendChild(o); });
+}
+function onRegGenbaChange() {
+  const val = document.getElementById('sel-genba').value;
+  const freeInput = document.getElementById('inp-genba-free');
+  const kantokuGroup = document.getElementById('reg-kantoku-group');
+  const kantokuFreeGroup = document.getElementById('reg-kantoku-free-group');
+  if (val === '__free__') {
+    freeInput.style.display = 'block';
+    kantokuGroup.style.display = 'none';
+    kantokuFreeGroup.style.display = 'block';
+    const selectEl = document.getElementById('reg-kantoku-free-select');
+    buildKantokuFreeSelect(selectEl, '');
+    handleKantokuFreeChange('reg-kantoku-free-select', 'reg-kantoku-free-input');
+  } else {
+    freeInput.style.display = 'none';
+    kantokuGroup.style.display = 'block';
+    kantokuFreeGroup.style.display = 'none';
+    const found = masters.genbas.find(g => g.name === val);
+    const k = found ? found.kantoku : '';
+    document.getElementById('reg-kantoku').value = k;
+    document.getElementById('reg-kantoku-disp').textContent = formatKantokus(k) || '（未設定）';
+  }
+}
+function onRegKantokuFreeChange() {
+  handleKantokuFreeChange('reg-kantoku-free-select', 'reg-kantoku-free-input');
+}
+async function submitRegister() {
+  const name = document.getElementById('sel-worker').value;
+  const selGenba = document.getElementById('sel-genba').value;
+  const genba = selGenba === '__free__' ? document.getElementById('inp-genba-free').value.trim() : selGenba;
+  const kantoku = selGenba === '__free__'
+    ? readKantokuFreeValue('reg-kantoku-free-select', 'reg-kantoku-free-input')
+    : document.getElementById('reg-kantoku').value;
+  const start = document.getElementById('inp-start').value;
+  const end = document.getElementById('inp-end').value;
+  if (!name || !genba || !start || !end) {
+    const m = [];
+    if (!name) m.push('作業員名'); if (!genba) m.push('現場名');
+    if (!start) m.push('開始日'); if (!end) m.push('終了予定日');
+    alert(m.join('・') + 'を選択してください'); return;
+  }
+  document.getElementById('reg-btn-submit').disabled = true;
+  showOverlay('登録中...');
+  await apiPost({ action: 'add', name, genba, kantoku, start, end, registrant: lineUserName || '' });
+  hideOverlay();
+  document.getElementById('reg-success-msg').innerHTML =
+    name + ' → ' + genba + (hasKantoku(kantoku) ? ' (監督: ' + formatKantokus(kantoku) + ')' : '') + '<br>' + fmt(start) + '〜' + fmt(end);
+  document.getElementById('reg-form').style.display = 'none';
+  document.getElementById('reg-success').style.display = 'block';
+  // バックグラウンドで最新化（戻った時に反映済みにする）
+  loadList();
+}
+function resetRegister() {
+  document.getElementById('sel-worker').selectedIndex = 0;
+  document.getElementById('sel-genba').selectedIndex = 0;
+  document.getElementById('inp-genba-free').value = '';
+  document.getElementById('inp-genba-free').style.display = 'none';
+  document.getElementById('reg-kantoku-group').style.display = 'block';
+  document.getElementById('reg-kantoku-free-group').style.display = 'none';
+  document.getElementById('reg-kantoku-free-input').style.display = 'none';
+  document.getElementById('reg-kantoku-free-input').value = '';
+  document.getElementById('reg-kantoku').value = '';
+  document.getElementById('reg-kantoku-disp').textContent = '現場を選ぶと自動表示されます';
+  document.getElementById('inp-start').value = '';
+  document.getElementById('inp-end').value = '';
+  const prev = document.getElementById('reg-koki-preview');
+  if (prev) prev.style.display = 'none';
+  document.getElementById('reg-btn-submit').disabled = false;
+  document.getElementById('reg-form').style.display = 'block';
+  document.getElementById('reg-success').style.display = 'none';
+}
+
+// ── マスタ管理 ──
+let currentTab = 'genba';
+
+function openLoginModal() {
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-modal-bg').style.display = 'block';
+  setTimeout(() => document.getElementById('login-password').focus(), 100);
+}
+function closeLoginModal() {
+  document.getElementById('login-modal-bg').style.display = 'none';
+}
+async function submitLogin() {
+  if (DEMO_MODE) { // 展示会デモ：パスワード不要で誰でも開ける
+    masterAuthed = true;
+    closeLoginModal();
+    hideAllPages();
+    document.getElementById('page-master').classList.add('active');
+    showBottomNav(false);
+    loadMasters();
+    return;
+  }
+  const pw = document.getElementById('login-password').value;
+  if (!pw) {
+    document.getElementById('login-err').textContent = 'パスワードを入力してください';
+    return;
+  }
+  document.getElementById('login-err').textContent = '';
+  showOverlay('認証中...');
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'login', password: pw }),
+      redirect: 'follow'
+    });
+    const result = await res.json();
+    hideOverlay();
+    if (result && result.success) {
+      masterAuthed = true;
+      masterPassword = pw;
+      closeLoginModal();
+      hideAllPages();
+      document.getElementById('page-master').classList.add('active');
+      showBottomNav(false);
+      loadMasters();
+    } else {
+      document.getElementById('login-err').textContent = (result && result.error) || 'パスワードが違います';
+    }
+  } catch (e) {
+    hideOverlay();
+    document.getElementById('login-err').textContent = '通信エラーが発生しました';
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-modal-bg').style.display === 'block') {
+    submitLogin();
+  }
+});
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-genba').classList.toggle('active', tab === 'genba');
+  document.getElementById('tab-kantoku').classList.toggle('active', tab === 'kantoku');
+  document.getElementById('tab-worker').classList.toggle('active', tab === 'worker');
+  renderMasterList();
+}
+
+async function loadMasters() {
+  showOverlay('読み込み中...');
+  try {
+    const m = await apiGet('masters');
+    masters = {
+      workers: Array.isArray(m.workers) ? m.workers : [],
+      genbas: Array.isArray(m.genbas) ? m.genbas : [],
+      kantokus: Array.isArray(m.kantokus) ? m.kantokus : []
+    };
+    renderMasterList();
+  } catch (e) {
+    document.getElementById('master-list').innerHTML = '<div class="master-empty">読み込みに失敗しました</div>';
+  }
+  hideOverlay();
+}
+
+// 現場マスタの監督名を重複排除して取得（読み取り専用ビュー用）
+function getKantokuListFromGenbas() {
+  const map = new Map();
+  // まず監督リストシートの監督を全員0件で入れておく
+  (masters.kantokus || []).forEach(k => {
+    if (k.name) map.set(k.name, 0);
+  });
+  // 現場マスタに含まれる監督をカウント
+  (masters.genbas || []).forEach(g => {
+    parseKantokus(g.kantoku).forEach(k => {
+      map.set(k, (map.get(k) || 0) + 1);
+    });
+  });
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+}
+
+function renderMasterList() {
+  const container = document.getElementById('master-list');
+  if (currentTab === 'genba') {
+    const items = masters.genbas || [];
+    let html = `<button class="master-add-btn" onclick="openGenbaModal()">＋ 現場を追加</button>`;
+    if (!items.length) {
+      html += '<div class="master-empty">現場が登録されていません</div>';
+    } else {
+      html += items.map(g => `
+        <div class="master-item">
+          <div class="master-item-info">
+            <div class="master-item-name">${esc(g.name)}</div>
+            <div class="master-item-sub">監督: ${esc(formatKantokus(g.kantoku)) || 'なし'}</div>
+          </div>
+          <div class="master-item-btns">
+            <button class="master-edit" onclick="openGenbaModal(${g.rowIndex})">編集</button>
+            <button class="master-del" onclick="deleteGenba(${g.rowIndex}, '${esc(g.name).replace(/'/g, "\\'")}')">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = html;
+  } else if (currentTab === 'kantoku') {
+    const items = getKantokuListFromGenbas();
+    let html = `<div class="master-empty" style="padding:14px 16px;text-align:left;font-size:12px;color:#666;background:#fff;border:1px solid #DDD;border-radius:10px;margin-bottom:10px;">監督名は「現場」タブで現場ごとに設定します。<br>ここでは現場マスタに登録されている監督が自動表示されます。</div>`;
+    if (!items.length) {
+      html += '<div class="master-empty">監督が登録されていません</div>';
+    } else {
+      html += items.map(k => `
+        <div class="master-item">
+          <div class="master-item-info">
+            <div class="master-item-name">${esc(k.name)}</div>
+            <div class="master-item-sub">担当現場: ${k.count}件</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = html;
+  } else {
+    const items = masters.workers || [];
+    let html = `<button class="master-add-btn" onclick="openWorkerModal()">＋ 作業員を追加</button>`;
+    if (!items.length) {
+      html += '<div class="master-empty">作業員が登録されていません</div>';
+    } else {
+      html += items.map(w => `
+        <div class="master-item">
+          <div class="master-item-info">
+            <div class="master-item-name">${esc(w.name)}</div>
+          </div>
+          <div class="master-item-btns">
+            <button class="master-edit" onclick="openWorkerModal(${w.rowIndex})">編集</button>
+            <button class="master-del" onclick="deleteWorker(${w.rowIndex}, '${esc(w.name).replace(/'/g, "\\'")}')">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = html;
+  }
+}
+
+// 現場マスタ：追加・編集モーダル
+function getUniqueKantokuList() {
+  const set = new Set();
+  // 監督リストシートにある監督
+  (masters.kantokus || []).forEach(k => {
+    if (k.name) set.add(k.name);
+  });
+  // 現場マスタに含まれる監督（カンマ区切り）
+  (masters.genbas || []).forEach(g => {
+    parseKantokus(g.kantoku).forEach(k => set.add(k));
+  });
+  return Array.from(set).sort();
+}
+
+// 直接入力モードの監督プルダウンを組み立てる共通関数
+function buildKantokuFreeSelect(selectEl, currentValue) {
+  selectEl.innerHTML = '';
+  const optNone = document.createElement('option');
+  optNone.value = ''; optNone.textContent = '─── （なし）';
+  selectEl.appendChild(optNone);
+  const optNew = document.createElement('option');
+  optNew.value = '__new__'; optNew.textContent = '＋ 新しい監督を入力';
+  selectEl.appendChild(optNew);
+  getUniqueKantokuList().forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    selectEl.appendChild(o);
+  });
+  // 値を復元
+  if (currentValue) {
+    const found = Array.from(selectEl.options).some(o => o.value === currentValue);
+    if (found) selectEl.value = currentValue;
+    else selectEl.value = '';
+  } else {
+    selectEl.value = '';
+  }
+}
+// 直接入力モードの監督プルダウン変更時の共通処理
+function handleKantokuFreeChange(selectId, freeInputId) {
+  const val = document.getElementById(selectId).value;
+  const free = document.getElementById(freeInputId);
+  if (val === '__new__') {
+    free.style.display = 'block';
+    free.value = '';
+    setTimeout(() => free.focus(), 50);
+  } else {
+    free.style.display = 'none';
+    free.value = '';
+  }
+}
+// 直接入力モードの監督プルダウンから最終的な値を取り出す共通処理
+function readKantokuFreeValue(selectId, freeInputId) {
+  const val = document.getElementById(selectId).value;
+  if (val === '__new__') {
+    return (document.getElementById(freeInputId).value || '').trim() || 'なし';
+  }
+  return val || 'なし';
+}
+// 現場マスタの監督欄：1行分を組み立てる
+function buildGenbaKantokuRow(value) {
+  const row = document.createElement('div');
+  row.className = 'genba-kantoku-row';
+  row.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center;';
+
+  const selWrap = document.createElement('div');
+  selWrap.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px;';
+
+  const sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;';
+  // 選択肢を組み立て
+  const optNone = document.createElement('option');
+  optNone.value = ''; optNone.textContent = '（なし）';
+  sel.appendChild(optNone);
+  const optNew = document.createElement('option');
+  optNew.value = '__new__'; optNew.textContent = '＋ 新しい監督を入力';
+  sel.appendChild(optNew);
+  getUniqueKantokuList().forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    sel.appendChild(o);
+  });
+
+  const free = document.createElement('input');
+  free.type = 'text';
+  free.placeholder = '監督名を入力';
+  free.style.cssText = 'display:none;';
+  free.className = 'genba-kantoku-free';
+
+  // 値の復元
+  const v = (value || '').trim();
+  if (v && Array.from(sel.options).some(o => o.value === v)) {
+    sel.value = v;
+  } else if (v) {
+    sel.value = '__new__';
+    free.style.display = 'block';
+    free.value = v;
+  } else {
+    sel.value = '';
+  }
+
+  sel.addEventListener('change', () => {
+    if (sel.value === '__new__') {
+      free.style.display = 'block';
+      free.value = '';
+      setTimeout(() => free.focus(), 50);
+    } else {
+      free.style.display = 'none';
+      free.value = '';
+    }
+  });
+
+  selWrap.appendChild(sel);
+  selWrap.appendChild(free);
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.textContent = '×';
+  delBtn.style.cssText = 'font-size:14px;color:#FF3B30;background:#FFF0EF;border:none;border-radius:8px;padding:0 12px;font-weight:600;cursor:pointer;height:42px;flex-shrink:0;';
+  delBtn.onclick = () => { row.remove(); };
+
+  row.appendChild(selWrap);
+  row.appendChild(delBtn);
+  return row;
+}
+
+function addGenbaKantokuRow(value) {
+  const container = document.getElementById('genba-kantoku-rows');
+  container.appendChild(buildGenbaKantokuRow(value || ''));
+}
+
+function openGenbaModal(rowIndex) {
+  document.getElementById('genba-modal-title').textContent = rowIndex ? '現場を編集' : '現場を追加';
+  document.getElementById('genba-edit-row').value = rowIndex || '';
+
+  // 監督行をリセット
+  const container = document.getElementById('genba-kantoku-rows');
+  container.innerHTML = '';
+
+  if (rowIndex) {
+    const g = (masters.genbas || []).find(x => x.rowIndex === rowIndex);
+    if (g) {
+      document.getElementById('genba-input-name').value = g.name || '';
+      const list = parseKantokus(g.kantoku);
+      if (list.length === 0) {
+        addGenbaKantokuRow(''); // デフォルトで1行
+      } else {
+        list.forEach(k => addGenbaKantokuRow(k));
+      }
+    } else {
+      document.getElementById('genba-input-name').value = '';
+      addGenbaKantokuRow('');
+    }
+  } else {
+    document.getElementById('genba-input-name').value = '';
+    addGenbaKantokuRow('');
+  }
+  document.getElementById('genba-modal-bg').style.display = 'block';
+}
+
+function closeGenbaModal() {
+  document.getElementById('genba-modal-bg').style.display = 'none';
+}
+
+async function saveGenba() {
+  const rowIndex = document.getElementById('genba-edit-row').value;
+  const name = document.getElementById('genba-input-name').value.trim();
+  // 全ての監督行から値を取り出す
+  const rows = document.querySelectorAll('#genba-kantoku-rows .genba-kantoku-row');
+  const kantokus = [];
+  rows.forEach(row => {
+    const sel = row.querySelector('select');
+    const free = row.querySelector('input.genba-kantoku-free');
+    const v = sel.value === '__new__' ? (free.value || '').trim() : sel.value;
+    if (v) kantokus.push(v);
+  });
+  const kantoku = joinKantokus(kantokus);
+  if (!name) { alert('現場名を入力してください'); return; }
+  closeGenbaModal();
+  showOverlay('保存中...');
+  if (rowIndex) {
+    await apiPost({ action: 'updateGenba', rowIndex: parseInt(rowIndex), name, kantoku, password: masterPassword });
+  } else {
+    await apiPost({ action: 'addGenba', name, kantoku, password: masterPassword });
+  }
+  await loadMasters();
+}
+async function deleteGenba(rowIndex, name) {
+  if (!confirm('「' + name + '」を削除しますか？\n過去の登録履歴はそのまま残ります。')) return;
+  showOverlay('削除中...');
+  await apiPost({ action: 'deleteGenba', rowIndex, password: masterPassword });
+  await loadMasters();
+}
+
+// 作業員マスタ：追加・編集モーダル
+function openWorkerModal(rowIndex) {
+  document.getElementById('worker-modal-title').textContent = rowIndex ? '作業員を編集' : '作業員を追加';
+  document.getElementById('worker-edit-row').value = rowIndex || '';
+  if (rowIndex) {
+    const w = (masters.workers || []).find(x => x.rowIndex === rowIndex);
+    if (w) document.getElementById('worker-input-name').value = w.name || '';
+  } else {
+    document.getElementById('worker-input-name').value = '';
+  }
+  document.getElementById('worker-modal-bg').style.display = 'block';
+}
+function closeWorkerModal() {
+  document.getElementById('worker-modal-bg').style.display = 'none';
+}
+async function saveWorker() {
+  const rowIndex = document.getElementById('worker-edit-row').value;
+  const name = document.getElementById('worker-input-name').value.trim();
+  if (!name) { alert('作業員名を入力してください'); return; }
+  closeWorkerModal();
+  showOverlay('保存中...');
+  if (rowIndex) {
+    await apiPost({ action: 'updateWorker', rowIndex: parseInt(rowIndex), name, password: masterPassword });
+  } else {
+    await apiPost({ action: 'addWorker', name, password: masterPassword });
+  }
+  await loadMasters();
+}
+async function deleteWorker(rowIndex, name) {
+  if (!confirm('「' + name + '」を削除しますか？\n過去の登録履歴はそのまま残ります。')) return;
+  showOverlay('削除中...');
+  await apiPost({ action: 'deleteWorker', rowIndex, password: masterPassword });
+  await loadMasters();
+}
+
+// ── LIFF初期化 → 初期データ読み込み ──
+const LIFF_ID = '2009834318-AVs2m5Hb';
+let lineUserId = null;       // LINEユーザーID（LIFF内で開いた場合のみ取得）
+let lineUserName = null;     // 表示名（LIFF内で開いた場合のみ取得）
+
+function updateLiffStatus(msg) {
+  const sub = document.getElementById('header-sub');
+  if (sub) sub.textContent = msg;
+}
+
+// 前回データがあれば即描画（開いた瞬間に出す・体感速度UP）
+function hydrateFromCache() {
+  try {
+    const raw = localStorage.getItem(LIST_CACHE_KEY);
+    if (!raw) return;
+    const cached = JSON.parse(raw);
+    if (cached && cached.masters) {
+      applyListData(cached);
+      if (!calWeekStart) calWeekStart = getMonday(new Date());
+      renderCalendar();
+      render();
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+async function initLiffAndLoad() {
+  if (DEMO_MODE) { try { localStorage.removeItem(LIST_CACHE_KEY); } catch(e) {} } // 前回データを持ち越さない
+  showBottomNav(true);   // カレンダーがホーム＝下ナビ表示
+  const hadCache = DEMO_MODE ? false : hydrateFromCache();    // 前回データを即表示（あれば）
+  // LIFFが使える環境ならログイン情報を取得、ダメなら普通に動かす
+  try {
+    if (!DEMO_MODE && typeof liff !== 'undefined') {
+      updateLiffStatus('LIFF初期化中...');
+      await liff.init({ liffId: LIFF_ID });
+      console.log('LIFF init OK. isInClient:', liff.isInClient(), 'isLoggedIn:', liff.isLoggedIn());
+      if (!liff.isLoggedIn()) {
+        // 未ログインなら必ずログイン画面へ（PC/スマホ共通、生コン方式）
+        liff.login();
+        return;
+      }
+      const profile = await liff.getProfile();
+      lineUserId = profile.userId;
+      lineUserName = profile.displayName;
+      console.log('LIFF logged in:', lineUserName, lineUserId);
+      updateLiffStatus('👤 ' + lineUserName);
+      // ユーザー設定を読み込む（失敗してもアプリは続行）
+      await loadUserSettings();
+    } else {
+      console.log('LIFF SDK 未読み込み');
+      updateLiffStatus('LIFF SDK 未読み込み');
+    }
+  } catch (e) {
+    console.warn('LIFF init failed (continuing as guest):', e);
+    updateLiffStatus('LIFFエラー: ' + (e.message || e));
+  }
+  // カレンダーをメイン画面として初期表示
+  if (!calWeekStart) calWeekStart = getMonday(new Date());
+  await loadList(hadCache);   // キャッシュ表示済みなら裏で静かに更新（全画面ローディングを出さない）
+  renderCalendar();
+}
+
+initLiffAndLoad();
+</script>
+</body>
+</html>
